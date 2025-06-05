@@ -9,6 +9,9 @@ on:
       dest-image:
         type: string
         required: true
+      build-args:
+        type: string
+        required: false
       tag-list:
         type: string
         required: true
@@ -89,6 +92,7 @@ jobs:
           image: ${{ env.DEST_IMAGE }}
           tags: ${{ env.TAGLIST }}
           containerfiles: ${{ env.CONTAINERFILE }}
+          build-args: ${{ inputs.build-args }}
 
       - name: Push to Container Repository
         id: push-to-ghcr
