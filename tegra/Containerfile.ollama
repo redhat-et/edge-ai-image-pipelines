@@ -1,0 +1,5 @@
+ARG BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
+
+FROM ${BASE_IMAGE}
+
+RUN curl -fsSL https://ollama.com/install.sh | sh
