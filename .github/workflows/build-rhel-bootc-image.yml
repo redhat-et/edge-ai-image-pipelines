@@ -18,6 +18,9 @@ on:
       runs-on:
         type: string
         default: ubuntu-24.04-arm
+    outputs:
+      dest-reference:
+        value: ${{ jobs.rhel-bootc-image-build.outputs.dest-reference }}
 
 jobs:
   rhel-bootc-image-build:
