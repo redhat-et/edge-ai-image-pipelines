@@ -27,7 +27,7 @@ jobs:
     name: Build RHEL bootc image
     runs-on: ${{ inputs.runs-on }}
     outputs:
-      dest-reference: "${{ steps.push-to-ghcr.outputs.registry-path }}:${{ steps.push-to-ghcr.outputs.digest }}"
+      dest-reference: "${{ steps.push-to-ghcr.outputs.registry-path }}@${{ steps.push-to-ghcr.outputs.digest }}"
     env:
       # Disable Subscription Manager container passthrough
       SMDEV_CONTAINER_OFF: 1
