@@ -1,0 +1,15 @@
+name: Build RHEL bootc image for Nvidia Tegra
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+      - "tegra/**"
+jobs:
+  build-tegra-base:
+    uses: ./.github/workflows/build-rhel-bootc-image.yml
+    secrets: inherit
+    with:
+      containerfile: tegra/Containerfile.base
+      dest-image: "redhat-et/rhel-bootc-tegra"
+      tag-list: "base"
