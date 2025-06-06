@@ -58,6 +58,13 @@ jobs:
       - name: Clone the repository
         uses: actions/checkout@v4
 
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
       - name: Get container tools in UBI builder
         run: dnf -y install podman buildah skopeo
 
