@@ -1,0 +1,21 @@
+ARG BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
+ARG APP_IMAGE=docker.io/dustynv/ollama:0.6.8-r36.4-cu126-22.04
+
+FROM ${BASE_IMAGE}
+
+RUN cat <<EOF > /etc/systemd/system/nvidia-cdi.service
+[Unit]
+Description=Generate the nvidia cdi yaml file
+Requires=multi-user.target
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+RUN systemctl enable nvidia-cdi
+RUN podman pull ${APP_IMAGE}
