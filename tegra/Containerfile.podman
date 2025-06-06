@@ -17,4 +17,5 @@ RemainAfterExit=yes
 WantedBy=multi-user.target
 EOF
 RUN systemctl enable nvidia-cdi
-RUN podman pull ${APP_IMAGE}
+
+RUN podman --storage-driver=vfs --root=/usr/share/containers/storage pull ${APP_IMAGE}
