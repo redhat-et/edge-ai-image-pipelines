@@ -35,4 +35,4 @@ jobs:
       tag-list: "vllm"
       build-args: |
         BASE_IMAGE=${{ needs.build-tegra-base.outputs.dest-reference }}
-        APP_IMAGE=docker.io/dustynv/vllm:0.9.2-r36.4-cu128-24.04
+        APP_IMAGE=docker.io/dustynv/vllm:0.8.6-r36.4-cu128-24.04
