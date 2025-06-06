@@ -18,4 +18,4 @@ WantedBy=multi-user.target
 EOF
 RUN systemctl enable nvidia-cdi
 
-RUN podman --storage-driver=vfs --root=/usr/share/containers/storage pull ${APP_IMAGE}
+RUN skopeo copy docker://${APP_IMAGE} docker-archive:/usr/share/app.tar
