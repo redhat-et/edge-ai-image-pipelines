@@ -43,7 +43,7 @@ jobs:
           podman pull ${{ needs.build-tegra-llm.outputs.dest-reference }}
       - name: Build raw image
         id: build-raw-img
-        uses: osbuild/bootc-image-builder-action@0.0.2
+        uses: osbuild/bootc-image-builder-action@v0.0.2
         with:
           config-file: tegra/config.toml
           image: ${{ needs.build-tegra-llm.outputs.dest-reference }}
