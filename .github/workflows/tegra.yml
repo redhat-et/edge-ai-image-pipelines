@@ -50,9 +50,6 @@ jobs:
           username: ${{ secrets.DEST_REGISTRY_USER }}
           password: ${{ secrets.DEST_REGISTRY_PASSWORD }}
           auth_file_path: /run/containers/0/auth.json
-      - name: Pull container image
-        run: |
-          podman pull quay.io/redhat-et/rhel-bootc-tegra:base
       - name: Build raw image
         id: build-raw-img
         uses: osbuild/bootc-image-builder-action@v0.0.2
@@ -61,3 +58,6 @@ jobs:
           image: quay.io/redhat-et/rhel-bootc-tegra:base
           types: |
             raw
+      - name: Push raw image
+        run: |
+          podman artifact add test ${{ steps.build-raw-img.outputs.raw-output-path }}
