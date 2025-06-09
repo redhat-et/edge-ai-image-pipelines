@@ -48,7 +48,7 @@ jobs:
       CONTAINERFILE: ${{ inputs.containerfile }}
 
     container:
-      image: registry.access.redhat.com/ubi9/ubi
+      image: registry.access.redhat.com/ubi10/ubi
       options: --privileged --volume /:/host
     permissions:
       contents: write
