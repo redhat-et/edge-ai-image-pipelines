@@ -1,7 +1,10 @@
 ARG BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
 FROM ${BASE_IMAGE}
 
-ADD https://gitlab.com/fedora/bootc/examples.git#main:physically-bound-images /opt/physically-bound-images
+ADD --chmod=0555 https://gitlab.com/fedora/bootc/examples/-/raw/main/physically-bound-images/embed_image.sh \
+      /opt/physically-bound-images/embed_image.sh
+ADD --chmod=0555 https://gitlab.com/fedora/bootc/examples/-/raw/main/physically-bound-images/copy_embedded_images.sh \
+      /opt/physically-bound-images/copy_embedded_images.sh
 
 RUN cat <<EOF > /etc/systemd/system/nvidia-cdi.service
 [Unit]
