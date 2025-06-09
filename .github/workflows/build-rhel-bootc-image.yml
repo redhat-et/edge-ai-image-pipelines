@@ -49,7 +49,7 @@ jobs:
 
     container:
       image: registry.access.redhat.com/ubi10/ubi
-      options: --privileged --volume /:/host
+      options: --privileged --volume /:/host --volume containers:/var/lib/containers
     permissions:
       contents: write
       packages: write
