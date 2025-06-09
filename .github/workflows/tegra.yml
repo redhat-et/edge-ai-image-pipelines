@@ -60,4 +60,5 @@ jobs:
             raw
       - name: Push raw image
         run: |
-          podman artifact add test ${{ steps.build-raw-img.outputs.raw-output-path }}
+          zstd ${{ steps.build-raw-img.outputs.raw-output-path }} -o image.raw.zst
+          podman artifact add test image.raw.zst
