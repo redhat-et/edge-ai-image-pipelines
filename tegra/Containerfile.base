@@ -9,3 +9,5 @@ RUN curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-co
       nvidia-jetpack-all \
       nvidia-container-toolkit && \
     sudo dnf clean all
+
+RUN sed -i '/ConditionVirtualization=vm/d' /usr/lib/systemd/system/bootc-generic-growpart.service
