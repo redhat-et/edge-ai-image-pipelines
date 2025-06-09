@@ -25,3 +25,27 @@ jobs:
       build-args: |
         BASE_IMAGE=${{ needs.build-tegra-base.outputs.dest-reference }}
         APP_IMAGES="docker.io/dustynv/vllm:0.8.6-r36.4-cu128-24.04 docker.io/dustynv/ollama:0.6.8-r36.4-cu126-22.04"
+  build-tegra-llm-image:
+    runs-on: ubuntu-24.04-arm
+    needs: build-tegra-llm
+    steps:
+      - name: Clone the repository
+        uses: actions/checkout@v4
+      - name: Log in to the Container registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ${{ env.DEST_REGISTRY_HOST }}
+          username: ${{ secrets.DEST_REGISTRY_USER }}
+          password: ${{ secrets.DEST_REGISTRY_PASSWORD }}
+          auth_file_path: /run/containers/0/auth.json
+      - name: Pull container image
+        run: |
+          podman pull ${{ needs.build-tegra-llm.outputs.dest-reference }}
+      - name: Build raw image
+        id: build-raw-img
+        uses: osbuild/bootc-image-builder-action@0.0.2
+        with:
+          config-file: tegra/config.toml
+          image: ${{ needs.build-tegra-llm.outputs.dest-reference }}
+          types: |
+            raw
