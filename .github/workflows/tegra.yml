@@ -28,9 +28,14 @@ jobs:
         APP_IMAGES=docker.io/dustynv/vllm:0.8.6-r36.4-cu128-24.04 docker.io/dustynv/ollama:0.6.8-r36.4-cu126-22.04
   build-tegra-llm-image:
     runs-on: ubuntu-24.04-arm
+    container:
+      image: registry.access.redhat.com/ubi10/ubi
+      options: --privileged --volume /:/host --volume containers:/var/lib/containers
     steps:
       - name: Clone the repository
         uses: actions/checkout@v4
+      - name: Get container tools in UBI builder
+        run: dnf -y install podman buildah skopeo jq
       - name: Log in to the Container registry
         uses: redhat-actions/podman-login@v1
         with:
