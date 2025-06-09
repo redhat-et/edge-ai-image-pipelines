@@ -37,7 +37,6 @@ jobs:
           registry: quay.io
           username: ${{ secrets.DEST_REGISTRY_USER }}
           password: ${{ secrets.DEST_REGISTRY_PASSWORD }}
-          auth_file_path: /run/containers/0/auth.json
       - name: Pull container image
         run: |
           podman pull ${{ needs.build-tegra-llm.outputs.dest-reference }}
@@ -45,7 +44,7 @@ jobs:
         id: build-raw-img
         uses: osbuild/bootc-image-builder-action@v0.0.2
         with:
-          config-file: tegra/config.toml
+          config-file: ./tegra/config.toml
           image: ${{ needs.build-tegra-llm.outputs.dest-reference }}
           types: |
             raw
