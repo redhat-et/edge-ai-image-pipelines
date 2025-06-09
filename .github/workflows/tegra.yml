@@ -60,5 +60,8 @@ jobs:
             raw
       - name: Push raw image
         run: |
+          REF="quay.io/redhat-et/rhel-bootc-tegra:llm@sha256:6c2fe28d8ebbf8"
+          REF="${s%@*}-raw"
           zstd ${{ steps.build-raw-img.outputs.raw-output-path }} -o image.raw.zst
-          podman artifact add test image.raw.zst
+          podman artifact add  ${REF} image.raw.zst
+          podman artifact push ${REF}
