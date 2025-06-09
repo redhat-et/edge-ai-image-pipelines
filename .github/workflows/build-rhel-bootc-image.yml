@@ -65,7 +65,12 @@ jobs:
           rm -rf /host/opt/ghc
 
       - name: Get container tools in UBI builder
-        run: dnf -y install podman buildah skopeo
+        run: dnf -y install podman buildah skopeo jq
+
+      - name: Disable container image signature verification
+        run: |
+          jq "del(.transports)" /etc/containers/policy.json > /etc/containers/policy.json.new
+          mv /etc/containers/policy.json.new /etc/containers/policy.json
 
       - name: Access a subscription via activation key
         run: subscription-manager register --org=${{ secrets.RHT_ORGID }} --activationkey=${{ secrets.RHT_ACT_KEY }}
