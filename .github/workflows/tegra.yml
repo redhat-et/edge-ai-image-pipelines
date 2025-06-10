@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-24.04-arm
     container:
       image: registry.access.redhat.com/ubi10/ubi
-      options: --privileged --volume /:/host --volume containers:/var/lib/containers
+      options: --privileged --volume /:/host --volume containers:/var/lib/containers --volume run-containers:/run/containers
     needs: build-tegra-llm
     steps:
       - name: Clone the repository
@@ -63,6 +63,7 @@ jobs:
           podman run --rm --privileged \
             --security-opt label=type:unconfined_t \
             --volume /var/tmp:/var/tmp \
+            --volume /run/containers:/run/containers \
             --volume /var/lib/containers/storage:/var/lib/containers/storage \
             --volume ./output:/output \
             --volume ./tegra/config.toml:/config.toml:ro \
