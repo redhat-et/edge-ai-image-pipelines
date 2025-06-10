@@ -31,6 +31,7 @@ jobs:
     container:
       image: registry.access.redhat.com/ubi10/ubi
       options: --privileged --device /dev/nvme0n1
+    needs: build-tegra-llm
     steps:
       - name: Clone the repository
         uses: actions/checkout@v4
@@ -60,7 +61,7 @@ jobs:
       - name: Build raw image
         run: |
           mkdir -p ./output
-          podman pull quay.io/redhat-et/rhel-bootc-tegra:llm
+          podman pull ${{ needs.build-tegra-llm.outputs.dest-reference }}
           podman run --rm --privileged \
             --security-opt label=type:unconfined_t \
             --volume /var/lib/containers/storage:/var/lib/containers/storage \
@@ -68,7 +69,7 @@ jobs:
             --volume ./tegra/config.toml:/config.toml:ro \
             quay.io/centos-bootc/bootc-image-builder:latest build \
             --output /output --type raw \
-            quay.io/redhat-et/rhel-bootc-tegra:llm
+            ${{ needs.build-tegra-llm.outputs.dest-reference }}
       - name: Push raw image
         run: |
           REF="${{ needs.build-tegra-llm.outputs.dest-reference }}"
