@@ -57,17 +57,22 @@ jobs:
           password: ${{ secrets.DEST_REGISTRY_PASSWORD }}
           auth_file_path: /run/containers/0/auth.json
       - name: Build raw image
-        id: build-raw-img
-        uses: osbuild/bootc-image-builder-action@v0.0.2
-        with:
-          config-file: ./tegra/config.toml
-          image: ${{ needs.build-tegra-llm.outputs.dest-reference }}
-          types: |
-            raw
+        run: |
+          mkdir -p ./output
+          podman pull ${{ needs.build-tegra-llm.outputs.dest-reference }}
+          podman run --rm --privileged \
+            --security-opt label=type:unconfined_t \
+            --volume /var/tmp:/var/tmp \
+            --volume /var/lib/containers/storage:/var/lib/containers/storage \
+            --volume ./output:/output \
+            --volume ./tegra/config.toml:/config.toml:ro \
+            quay.io/centos-bootc/bootc-image-builder:latest build \
+            --output /output --type raw \
+            ${{ needs.build-tegra-llm.outputs.dest-reference }}
       - name: Push raw image
         run: |
           REF="${{ needs.build-tegra-llm.outputs.dest-reference }}"
           REF="${REF%@*}-raw"
-          zstd ${{ steps.build-raw-img.outputs.raw-output-path }} -o image.raw.zst
+          zstd ./output/image/disk.raw -o image.raw.zst
           podman artifact add  ${REF} image.raw.zst
           podman artifact push ${REF}
