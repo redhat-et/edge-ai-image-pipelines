@@ -36,6 +36,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Free up disk space
         run: |
+          dnf config-manager --add-repo https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/
+          dnf install xfsprogs -y --nogpgcheck
           mkfs.xfs /dev/nvme0n1
           mkdir -p              /var/lib/containers
           mount    /dev/nvme0n1 /var/lib/containers
