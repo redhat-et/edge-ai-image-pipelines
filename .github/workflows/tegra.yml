@@ -30,16 +30,16 @@ jobs:
     runs-on: ubuntu-24.04-arm
     container:
       image: registry.access.redhat.com/ubi10/ubi
-      options: --privileged --volume /:/host --volume containers:/var/lib/containers --volume run-containers:/run/containers
+      options: --privileged --device /dev/nvme0n1
     needs: build-tegra-llm
     steps:
       - name: Clone the repository
         uses: actions/checkout@v4
       - name: Free up disk space
         run: |
-          rm -rf /host/usr/local/lib/android
-          rm -rf /host/usr/share/dotnet
-          rm -rf /host/opt/ghc
+          sudo mkfs.xfs /dev/nvme0n1
+          sudo mkdir -p              /var/lib/containers
+          sudo mount    /dev/nvme0n1 /var/lib/containers
       - name: Get container tools in UBI builder
         run: dnf -y install podman buildah skopeo jq zstd
       # workaround for https://github.com/redhat-actions/podman-login/issues/42 since the docker config from the host doesn't come up to the container
