@@ -7,7 +7,28 @@ RUN curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-co
     sudo dnf -y install \
       nvidia-jetpack-kmod \
       nvidia-jetpack-all \
+      netavark \
       nvidia-container-toolkit && \
     sudo dnf clean all
 
+RUN cat <<EOF > /etc/systemd/system/nvidia-cdi.service
+[Unit]
+Description=Generate the nvidia cdi yaml file
+Requires=multi-user.target
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+RUN systemctl enable nvidia-cdi
+
 RUN sed -i '/ConditionVirtualization=vm/d' /usr/lib/systemd/system/bootc-generic-growpart.service
+
+RUN cat <<CFG > /etc/sudoers.d/wheel-nopasswd
+%wheel ALL=(ALL) NOPASSWD: ALL
+CFG
