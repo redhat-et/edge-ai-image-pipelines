@@ -5,9 +5,9 @@ RUN curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-co
     curl -s -L https://repo.download.nvidia.com/jetson/rhel-9.4/jp6.1/nvidia-l4t.repo | \
     sudo tee /etc/yum.repos.d/nvidia-l4t.repo && \
     sudo dnf -y install \
+      netavark \
       nvidia-jetpack-kmod \
       nvidia-jetpack-all \
-      netavark \
       nvidia-container-toolkit && \
     sudo dnf clean all
 
@@ -28,6 +28,7 @@ EOF
 RUN systemctl enable nvidia-cdi
 
 RUN sed -i '/ConditionVirtualization=vm/d' /usr/lib/systemd/system/bootc-generic-growpart.service
+RUN sed -i 's/#network_backend = ""/network_backend = "netavark"/' /usr/share/containers/containers.conf
 
 RUN cat <<CFG > /etc/sudoers.d/wheel-nopasswd
 %wheel ALL=(ALL) NOPASSWD: ALL
