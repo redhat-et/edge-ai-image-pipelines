@@ -6,22 +6,6 @@ ADD --chmod=0555 https://gitlab.com/fedora/bootc/examples/-/raw/main/physically-
 ADD --chmod=0555 https://gitlab.com/fedora/bootc/examples/-/raw/main/physically-bound-images/copy_embedded_images.sh \
       /opt/physically-bound-images/copy_embedded_images.sh
 
-RUN cat <<EOF > /etc/systemd/system/nvidia-cdi.service
-[Unit]
-Description=Generate the nvidia cdi yaml file
-Requires=multi-user.target
-After=multi-user.target
-
-[Service]
-Type=oneshot
-ExecStart=nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-EOF
-RUN systemctl enable nvidia-cdi
-
 RUN cat <<EOF > /etc/systemd/system/copy-embedded-images.service
 [Unit]
 Description=Copy embedded images
