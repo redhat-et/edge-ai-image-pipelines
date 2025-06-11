@@ -29,6 +29,7 @@ RUN systemctl enable nvidia-cdi
 
 RUN sed -i '/ConditionVirtualization=vm/d' /usr/lib/systemd/system/bootc-generic-growpart.service
 RUN sed -i 's/#network_backend = ""/network_backend = "netavark"/' /usr/share/containers/containers.conf
+RUN ln -sr /usr/bin/podman /usr/bin/docker
 
 RUN cat <<CFG > /etc/sudoers.d/wheel-nopasswd
 %wheel ALL=(ALL) NOPASSWD: ALL
