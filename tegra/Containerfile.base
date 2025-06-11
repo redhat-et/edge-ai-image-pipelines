@@ -31,6 +31,7 @@ RUN sed -i '/ConditionVirtualization=vm/d' /usr/lib/systemd/system/bootc-generic
 RUN sed -i 's/#network_backend = ""/network_backend = "netavark"/' /usr/share/containers/containers.conf
 RUN sed -i 's/SocketMode=0660/SocketMode=0666/' /usr/lib/systemd/system/podman.socket
 RUN ln -sr /usr/bin/podman /usr/bin/docker
+RUN systemctl enable podman.socket
 
 RUN cat <<CFG > /etc/sudoers.d/wheel-nopasswd
 %wheel ALL=(ALL) NOPASSWD: ALL
