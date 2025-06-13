@@ -27,6 +27,10 @@ WantedBy=multi-user.target
 EOF
 RUN systemctl enable nvidia-cdi
 
+RUN cat <<EOF > /etc/ssh/sshd_config.d/51-custom.conf
+GatewayPorts clientspecified
+EOF
+
 RUN sed -i '/ConditionVirtualization=vm/d' /usr/lib/systemd/system/bootc-generic-growpart.service
 RUN sed -i 's/#network_backend = ""/network_backend = "netavark"/' /usr/share/containers/containers.conf
 RUN sed -i 's/SocketMode=0660/SocketMode=0666/' /usr/lib/systemd/system/podman.socket
