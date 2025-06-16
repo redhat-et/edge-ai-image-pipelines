@@ -49,7 +49,7 @@ jobs:
 
     container:
       image: registry.access.redhat.com/ubi10/ubi
-      options: --privileged --volume /:/host --volume containers:/var/lib/containers
+      options: --privileged --device /dev/nvme0n1
     permissions:
       contents: write
       packages: write
@@ -58,12 +58,6 @@ jobs:
       - name: Clone the repository
         uses: actions/checkout@v4
 
-      - name: Free up disk space
-        run: |
-          rm -rf /host/usr/local/lib/android
-          rm -rf /host/usr/share/dotnet
-          rm -rf /host/opt/ghc
-
       - name: Get container tools in UBI builder
         run: dnf -y install podman buildah skopeo jq
 
@@ -71,6 +65,14 @@ jobs:
         run: |
           jq "del(.transports)" /etc/containers/policy.json > /etc/containers/policy.json.new
           mv /etc/containers/policy.json.new /etc/containers/policy.json
+
+      - name: Free up disk space
+        run: |
+          dnf config-manager --add-repo https://repo.almalinux.org/almalinux/10/BaseOS/aarch64/os/
+          dnf install xfsprogs -y --nogpgcheck
+          mkfs.xfs /dev/nvme0n1
+          mkdir -p              /var/lib/containers
+          mount    /dev/nvme0n1 /var/lib/containers
 
       - name: Access a subscription via activation key
         run: subscription-manager register --org=${{ secrets.RHT_ORGID }} --activationkey=${{ secrets.RHT_ACT_KEY }}
