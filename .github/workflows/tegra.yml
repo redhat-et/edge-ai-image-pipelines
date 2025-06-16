@@ -25,7 +25,7 @@ jobs:
       tag-list: "llm"
       build-args: |
         BASE_IMAGE=${{ needs.build-tegra-base.outputs.dest-reference }}
-        APP_IMAGES=docker.io/dustynv/vllm:0.8.6-r36.4-cu128-24.04 docker.io/dustynv/ollama:0.6.8-r36.4-cu126-22.04
+        APP_IMAGES=docker.io/dustynv/vllm:0.8.6-r36.4-cu128-24.04 docker.io/dustynv/ollama:0.6.8-r36.4-cu126-22.04 nvcr.io/nvidia/tritonserver:25.05-py3-igpu
   build-tegra-llm-image:
     runs-on: ubuntu-24.04-arm
     container:
