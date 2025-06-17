@@ -25,7 +25,8 @@ jobs:
       tag-list: "ollama"
       build-args: |
         BASE_IMAGE=${{ needs.build-tegra-base.outputs.dest-reference }}
-        APP_IMAGES=docker.io/dustynv/ollama:0.6.8-r36.4-cu126-22.04 quay.io/ncao/modelsaddle-catalog:gemma3-4b quay.io/ncao/modelsaddle-catalog:gemma3-4b quay.io/ncao/modelsaddle-catalog:granite3.2-vision-2b
+        APP_IMAGES=docker.io/dustynv/ollama:0.6.8-r36.4-cu126-22.04
+        DAT_IMAGES=quay.io/ncao/modelsaddle-catalog:gemma3-4b quay.io/ncao/modelsaddle-catalog:gemma3-4b quay.io/ncao/modelsaddle-catalog:granite3.2-vision-2b
   build-tegra-llm:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
     secrets: inherit

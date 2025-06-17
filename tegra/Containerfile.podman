@@ -23,8 +23,12 @@ EOF
 RUN systemctl enable copy-embedded-images
 
 ARG APP_IMAGES
+ARG DAT_IMAGES
 RUN <<PULL
 for IMAGE in ${APP_IMAGES}; do
   /opt/physically-bound-images/embed_image.sh ${IMAGE}
+done
+for IMAGE in ${DAT_IMAGES}; do
+  /opt/physically-bound-images/embed_image.sh ${IMAGE} --multi-arch=all
 done
 PULL
