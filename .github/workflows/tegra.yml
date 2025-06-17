@@ -52,6 +52,18 @@ jobs:
         BASE_IMAGE=${{ needs.build-tegra-base.outputs.dest-reference }}
         APP_IMAGES=docker.io/dustynv/vllm:0.8.6-r36.4-cu128-24.04
 
+  build-tegra-vllm-with-models:
+    uses: ./.github/workflows/build-rhel-bootc-image.yml
+    secrets: inherit
+    needs: build-tegra-vllm
+    with:
+      containerfile: tegra/Containerfile.hf
+      dest-image: "redhat-et/rhel-bootc-tegra"
+      tag-list: "vllm-with-models"
+      build-args: |
+        BASE_IMAGE=${{ needs.build-tegra-vllm.outputs.dest-reference }}
+        HF_REPOS=ibm-granite/granite-vision-3.2-2b moondream/moondream-2b-2025-04-14
+
   build-tegra-triton:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
     secrets: inherit
