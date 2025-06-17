@@ -1,0 +1,66 @@
+name: Build RHEL bootc raw image for Nvidia Tegra
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        type: string
+        default: ubuntu-24.04-arm
+      config-file:
+        type: string
+        required: true
+      src-reference:
+        type: string
+        required: true
+
+jobs:
+  build-rhel-bootc-raw-image:
+    name: Build RHEL bootc raw image
+    runs-on: ${{ inputs.runs-on }}
+    container:
+      image: registry.access.redhat.com/ubi10/ubi
+      options: --privileged --device /dev/nvme0n1
+    steps:
+      - name: Clone the repository
+        uses: actions/checkout@v4
+      - name: Free up disk space
+        run: |
+          dnf config-manager --add-repo https://repo.almalinux.org/almalinux/10/BaseOS/aarch64/os/
+          dnf install xfsprogs -y --nogpgcheck
+          mkfs.xfs /dev/nvme0n1
+          mkdir -p              /var/lib/containers
+          mount    /dev/nvme0n1 /var/lib/containers
+      - name: Get container tools in UBI builder
+        run: dnf -y --nogpgcheck install podman buildah skopeo jq zstd
+      # workaround for https://github.com/redhat-actions/podman-login/issues/42 since the docker config from the host doesn't come up to the container
+      - name: Workaround open podman-login action issue
+        env:
+          auth: "{ \"auths\": {} }"
+        run: |
+          mkdir -p $HOME/.docker
+          echo $auth > $HOME/.docker/config.json
+      - name: Log in to the Container registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: quay.io
+          username: ${{ secrets.DEST_REGISTRY_USER }}
+          password: ${{ secrets.DEST_REGISTRY_PASSWORD }}
+          auth_file_path: /run/containers/0/auth.json
+      - name: Build raw image
+        run: |
+          mkdir -p ./output
+          podman pull ${{ inputs.src-reference }}
+          podman run --rm --privileged \
+            --security-opt label=type:unconfined_t \
+            --volume /var/lib/containers/storage:/var/lib/containers/storage \
+            --volume ./output:/output \
+            --volume ${{ inputs.config-file }}:/config.toml:ro \
+            quay.io/centos-bootc/bootc-image-builder:latest build \
+            --output /output --type raw \
+            ${{ inputs.src-reference }}
+      - name: Push raw image
+        run: |
+          REF="${{ inputs.src-reference }}"
+          REF="${REF%@*}-raw"
+          zstd ./output/image/disk.raw -o image.raw.zst
+          podman artifact add  ${REF} image.raw.zst
+          podman artifact push ${REF}

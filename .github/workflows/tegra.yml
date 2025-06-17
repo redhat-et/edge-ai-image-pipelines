@@ -65,53 +65,9 @@ jobs:
         APP_IMAGES=docker.io/dustynv/ollama:0.6.8-r36.4-cu126-22.04 docker.io/dustynv/vllm:0.8.6-r36.4-cu128-24.04 nvcr.io/nvidia/tritonserver:25.05-py3-igpu
 
   build-tegra-llm-image:
-    runs-on: ubuntu-24.04-arm
-    container:
-      image: registry.access.redhat.com/ubi10/ubi
-      options: --privileged --device /dev/nvme0n1
+    uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
+    secrets: inherit
     needs: build-tegra-llm
-    steps:
-      - name: Clone the repository
-        uses: actions/checkout@v4
-      - name: Free up disk space
-        run: |
-          dnf config-manager --add-repo https://repo.almalinux.org/almalinux/10/BaseOS/aarch64/os/
-          dnf install xfsprogs -y --nogpgcheck
-          mkfs.xfs /dev/nvme0n1
-          mkdir -p              /var/lib/containers
-          mount    /dev/nvme0n1 /var/lib/containers
-      - name: Get container tools in UBI builder
-        run: dnf -y --nogpgcheck install podman buildah skopeo jq zstd
-      # workaround for https://github.com/redhat-actions/podman-login/issues/42 since the docker config from the host doesn't come up to the container
-      - name: Workaround open podman-login action issue
-        env:
-          auth: "{ \"auths\": {} }"
-        run: |
-          mkdir -p $HOME/.docker
-          echo $auth > $HOME/.docker/config.json
-      - name: Log in to the Container registry
-        uses: redhat-actions/podman-login@v1
-        with:
-          registry: quay.io
-          username: ${{ secrets.DEST_REGISTRY_USER }}
-          password: ${{ secrets.DEST_REGISTRY_PASSWORD }}
-          auth_file_path: /run/containers/0/auth.json
-      - name: Build raw image
-        run: |
-          mkdir -p ./output
-          podman pull ${{ needs.build-tegra-llm.outputs.dest-reference }}
-          podman run --rm --privileged \
-            --security-opt label=type:unconfined_t \
-            --volume /var/lib/containers/storage:/var/lib/containers/storage \
-            --volume ./output:/output \
-            --volume ./tegra/config.toml:/config.toml:ro \
-            quay.io/centos-bootc/bootc-image-builder:latest build \
-            --output /output --type raw \
-            ${{ needs.build-tegra-llm.outputs.dest-reference }}
-      - name: Push raw image
-        run: |
-          REF="${{ needs.build-tegra-llm.outputs.dest-reference }}"
-          REF="${REF%@*}-raw"
-          zstd ./output/image/disk.raw -o image.raw.zst
-          podman artifact add  ${REF} image.raw.zst
-          podman artifact push ${REF}
+    with:
+      config-file: ./tegra/config.toml
+      src-reference: ${{ needs.build-tegra-llm.outputs.dest-reference }}
