@@ -40,3 +40,7 @@ RUN systemctl enable podman.socket
 RUN cat <<CFG > /etc/sudoers.d/wheel-nopasswd
 %wheel ALL=(ALL) NOPASSWD: ALL
 CFG
+
+RUN cat <<EOF > /usr/lib/bootc/kargs.d/10-jetson.toml
+kargs = ["enforcing=0", "console=ttyTCU0,115200"]
+EOF

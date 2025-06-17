@@ -1,6 +1,3 @@
-[customizations.kernel]
-append = "enforcing=0 console=ttyTCU0,115200"
-
 [[customizations.user]]
 name = "admin"
 password = "passwd"
