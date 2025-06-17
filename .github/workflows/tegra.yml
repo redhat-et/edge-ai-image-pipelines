@@ -64,6 +64,14 @@ jobs:
         BASE_IMAGE=${{ needs.build-tegra-base.outputs.dest-reference }}
         APP_IMAGES=docker.io/dustynv/ollama:0.6.8-r36.4-cu126-22.04 docker.io/dustynv/vllm:0.8.6-r36.4-cu128-24.04 nvcr.io/nvidia/tritonserver:25.05-py3-igpu
 
+  build-tegra-base-image:
+    uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
+    secrets: inherit
+    needs: build-tegra-base
+    with:
+      config-file: ./tegra/config.toml
+      src-reference: ${{ needs.build-tegra-base.outputs.dest-reference }}
+
   build-tegra-llm-image:
     uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
     secrets: inherit
