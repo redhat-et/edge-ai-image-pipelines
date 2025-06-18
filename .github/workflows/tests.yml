@@ -10,10 +10,15 @@ on:
 jobs:
   test-tegra-base-image:
     runs-on: ubuntu-24.04-arm
+    container:
+      image: registry.access.redhat.com/ubi10/ubi
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
-      - run: |
+      - name: Test RHEL bootc image
+        run: |
+          dnf -y install podman
+
           uv venv
           uv pip install --extra-index-url https://pkg.jumpstarter.dev/main/simple jumpstarter-all
 
