@@ -37,7 +37,7 @@ jobs:
           username: ${{ secrets.DEST_REGISTRY_USER }}
           password: ${{ secrets.DEST_REGISTRY_PASSWORD }}
           auth_file_path: /run/containers/0/auth.json
-      - name: Test RHEL bootc image
+      - name: Prepare RHEL bootc image
         run: |
           podman artifact pull    quay.io/redhat-et/rhel-bootc-tegra:base-raw
           podman artifact extract quay.io/redhat-et/rhel-bootc-tegra:base-raw image.raw.zst
@@ -51,5 +51,21 @@ jobs:
           ${{ secrets.JUMPSTARTER_CLIENT_CONFIG }}
           EOF
           uv run jmp config client use default
-
-          uv run jmp shell --selector nvidia=orin-nx -- pytest -s
+      - name: Acquire lease
+        run: |
+          LEASE=$(uv run jmp create lease --selector nvidia=orin-nx --output name)
+          while true; do
+            EXPORTER=$(uv run jmp get leases -o json | jq ".leases[] | select(.name==\"$LEASE\") | .exporter")
+            if [[ -n "$EXPORTER" ]]; then
+              break
+            fi
+            sleep 5
+          done
+          echo "LEASE=$LEASE" >> "$GITHUB_ENV"
+      - name: Test RHEL bootc image
+        run: |
+          uv run jmp shell --lease $LEASE -- j
+      - name: Release lease
+        if: always()
+        run: |
+          uv run jmp delete leases $LEASE
