@@ -1,0 +1,20 @@
+name: Test RHEL bootc image
+on:
+  push:
+jobs:
+  test-tegra-base-image:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: |
+          uv venv
+          uv pip install --extra-index-url https://pkg.jumpstarter.dev/main/simple jumpstarter-all
+
+          mkdir -p ~/.config/jumpstarter/clients
+          cat <<EOF > ~/.config/jumpstarter/clients/default.yaml
+          ${{ secrets.JUMPSTARTER_CLIENT_CONFIG }}
+          EOF
+          uv run jmp config client use default
+
+          uv run jmp shell --selector board=virtual -- pytest -s
