@@ -11,23 +11,16 @@ jobs:
   test-tegra-base-image:
     runs-on: ubuntu-24.04-arm
     container:
-      image: registry.access.redhat.com/ubi10/ubi
+      image: docker.io/fedora:42
       options: --privileged --device /dev/nvme0n1
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - name: Install podman
         run: dnf -y install podman zstd jq
-      # workaround for https://github.com/redhat-actions/podman-login/issues/42 since the docker config from the host doesn't come up to the container
-      - name: Disable container image signature verification
-        run: |
-          jq "del(.transports)" /etc/containers/policy.json > /etc/containers/policy.json.new
-          mv /etc/containers/policy.json.new /etc/containers/policy.json
-
       - name: Free up disk space
         run: |
-          dnf config-manager --add-repo https://repo.almalinux.org/almalinux/10/BaseOS/aarch64/os/
-          dnf install xfsprogs -y --nogpgcheck
+          dnf install xfsprogs -y
           mkfs.xfs /dev/nvme0n1
           mkdir -p              /var/lib/containers
           mount    /dev/nvme0n1 /var/lib/containers
