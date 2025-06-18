@@ -6,7 +6,9 @@ on:
       - "main"
     paths:
       - "tegra/**"
-      - ".github/workflows/**"
+      - ".github/workflows/build-rhel-bootc-image.yml"
+      - ".github/workflows/build-rhel-bootc-raw-image.yml"
+      - ".github/workflows/tegra.yml"
 jobs:
   build-tegra-base:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
