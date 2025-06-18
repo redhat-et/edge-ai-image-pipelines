@@ -27,7 +27,7 @@ jobs:
       - name: Log in to the Container registry
         uses: redhat-actions/podman-login@v1
         with:
-          registry: ${{ env.DEST_REGISTRY_HOST }}
+          registry: quay.io
           username: ${{ secrets.DEST_REGISTRY_USER }}
           password: ${{ secrets.DEST_REGISTRY_PASSWORD }}
           auth_file_path: /run/containers/0/auth.json
