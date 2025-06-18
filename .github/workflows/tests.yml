@@ -15,9 +15,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
+      - name: Install podman
+        run: dnf -y install podman zstd
+      # workaround for https://github.com/redhat-actions/podman-login/issues/42 since the docker config from the host doesn't come up to the container
+      - name: Workaround open podman-login action issue
+        env:
+          auth: "{ \"auths\": {} }"
+        run: |
+          mkdir -p $HOME/.docker
+          echo $auth > $HOME/.docker/config.json
+      - name: Log in to the Container registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ${{ env.DEST_REGISTRY_HOST }}
+          username: ${{ secrets.DEST_REGISTRY_USER }}
+          password: ${{ secrets.DEST_REGISTRY_PASSWORD }}
+          auth_file_path: /run/containers/0/auth.json
       - name: Test RHEL bootc image
         run: |
-          dnf -y install podman
+          podman artifact pull    quay.io/redhat-et/rhel-bootc-tegra:base-raw
+          podman artifact extract quay.io/redhat-et/rhel-bootc-tegra:base-raw image.raw.zst
+          zstd -d image.raw.zst
 
           uv venv
           uv pip install --extra-index-url https://pkg.jumpstarter.dev/main/simple jumpstarter-all
@@ -28,4 +46,4 @@ jobs:
           EOF
           uv run jmp config client use default
 
-          uv run jmp shell --selector board=virtual -- pytest -s
+          uv run jmp shell --selector nvidia=orin-nx -- pytest -s
