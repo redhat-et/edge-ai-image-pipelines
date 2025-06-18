@@ -64,7 +64,7 @@ jobs:
           echo "LEASE=$LEASE" >> "$GITHUB_ENV"
       - name: Test RHEL bootc image
         run: |
-          uv run jmp shell --lease $LEASE -- j
+          uv run jmp shell --lease $LEASE -- pytest -s
       - name: Release lease
         if: always()
         run: |
