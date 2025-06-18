@@ -13,9 +13,9 @@ class TestQemu(JumpstarterTest):
             with client.serial.pexpect() as p:
                 p.logfile = sys.stdout.buffer
                 p.expect_exact("login:", timeout=600)
-                p.sendline("jumpstarter")
+                p.sendline("admin")
                 p.expect_exact("Password:")
-                p.sendline("password")
+                p.sendline("passwd")
                 p.expect_exact(" ~]$")
                 p.sendline("sudo setenforce 0")
                 p.expect_exact(" ~]$")
