@@ -1,0 +1,11 @@
+services:
+  jetson-stats:
+    build:
+      context: .
+      dockerfile: Containerfile.jetson-stats
+    privileged: true
+    pid: host
+    volumes:
+      - "/run:/run"
+      - "/sys:/sys"
+      - "/etc:/etc"
