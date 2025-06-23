@@ -37,7 +37,7 @@ jobs:
     needs: build-tegra-trtexec
     with:
       config-file: ./inference/config.toml
-      src-reference: ${{ needs.build.build-tegra-trtexec.outputs.dest-reference }}
+      src-reference: ${{ needs.build-tegra-trtexec.outputs.dest-reference }}
 
   create-engine:
     runs-on: ubuntu-24.04-arm
