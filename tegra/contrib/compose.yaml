@@ -6,9 +6,20 @@ services:
     privileged: true
     pid: host
     volumes:
-      - "/run:/run"
+      - "run:/run"
       - "/sys:/sys"
       - "/var:/var"
       - "/etc/fstab:/etc/fstab"
       - "/etc/nvpmodel:/etc/nvpmodel"
       - "/etc/nvpmodel.conf:/etc/nvpmodel.conf"
+  jetson-stats-node-exporter:
+    build:
+      context: .
+      dockerfile: Containerfile.jetson-stats-node-exporter
+    depends_on:
+      jetson-stats:
+        condition: service_started
+    volumes:
+      - "run:/run"
+volumes:
+  run:
