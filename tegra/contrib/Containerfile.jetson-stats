@@ -9,4 +9,4 @@ RUN curl -s -L https://repo.download.nvidia.com/jetson/rhel-9.4/jp6.1/nvidia-l4t
 RUN groupadd jtop
 
 RUN uv venv /app && VIRTUAL_ENV=/app uv pip install git+https://github.com/rbonghi/jetson_stats
-ENTRYPOINT JTOP_SERVICE=True /app/bin/jtop
+ENTRYPOINT rm -f /run/jtop.sock && JTOP_SERVICE=True /app/bin/jtop
