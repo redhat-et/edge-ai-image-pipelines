@@ -85,7 +85,7 @@ jobs:
           uv run jmp config client use default
       - name: Acquire lease
         run: |
-          LEASE=$(uv run jmp create lease --selector name=nvidia-jetson-nx-orin-01-khw-eng-bos2-beaker --duration 01:00:00 --output name)
+          LEASE=$(uv run jmp create lease --selector name=majopela-orin-nx --duration 01:00:00 --output name)
           while true; do
             EXPORTER=$(uv run jmp get leases -o json | jq ".leases[] | select(.name==\"$LEASE\") | .exporter")
             if [[ -n "$EXPORTER" ]]; then
