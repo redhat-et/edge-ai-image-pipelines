@@ -1,4 +1,4 @@
-name: Build RHEL bootc image for Inference Server on Nvidia Tegra
+name: Build Inference Server on RHEL Bootc Nvidia Tegra
 on:
   workflow_dispatch:
   push:
