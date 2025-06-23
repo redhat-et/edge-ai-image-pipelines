@@ -1,0 +1,46 @@
+FROM registry.redhat.io/rhel9/rhel-bootc:9.4-1730828483
+
+RUN curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo | \
+    sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo && \
+    curl -s -L https://repo.download.nvidia.com/jetson/rhel-9.4/jp6.1/nvidia-l4t.repo | \
+    sudo tee /etc/yum.repos.d/nvidia-l4t.repo && \
+    sudo dnf -y install \
+      netavark \
+      nvidia-jetpack-kmod \
+      nvidia-jetpack-all \
+      nvidia-container-toolkit && \
+    sudo dnf clean all
+
+RUN cat <<EOF > /etc/systemd/system/nvidia-cdi.service
+[Unit]
+Description=Generate the nvidia cdi yaml file
+Requires=multi-user.target
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+RUN systemctl enable nvidia-cdi
+
+RUN cat <<EOF > /etc/ssh/sshd_config.d/51-custom.conf
+GatewayPorts clientspecified
+EOF
+
+RUN sed -i '/ConditionVirtualization=vm/d' /usr/lib/systemd/system/bootc-generic-growpart.service
+RUN sed -i 's/#network_backend = ""/network_backend = "netavark"/' /usr/share/containers/containers.conf
+RUN sed -i 's/SocketMode=0660/SocketMode=0666/' /usr/lib/systemd/system/podman.socket
+RUN ln -sr /usr/bin/podman /usr/bin/docker
+RUN systemctl enable podman.socket
+
+RUN cat <<CFG > /etc/sudoers.d/wheel-nopasswd
+%wheel ALL=(ALL) NOPASSWD: ALL
+CFG
+
+RUN cat <<EOF > /usr/lib/bootc/kargs.d/10-jetson.toml
+kargs = ["enforcing=0", "console=ttyTCU0,115200"]
+EOF

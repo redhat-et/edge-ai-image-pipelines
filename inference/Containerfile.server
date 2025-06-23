@@ -1,0 +1,34 @@
+ARG BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
+FROM ${BASE_IMAGE}
+
+ADD --chmod=0555 https://gitlab.com/fedora/bootc/examples/-/raw/main/physically-bound-images/embed_image.sh \
+      /opt/physically-bound-images/embed_image.sh
+ADD --chmod=0555 https://gitlab.com/fedora/bootc/examples/-/raw/main/physically-bound-images/copy_embedded_images.sh \
+      /opt/physically-bound-images/copy_embedded_images.sh
+
+RUN cat <<EOF > /etc/systemd/system/copy-embedded-images.service
+[Unit]
+Description=Copy embedded images
+Requires=multi-user.target
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/physically-bound-images/copy_embedded_images.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+RUN systemctl enable copy-embedded-images
+
+ARG APP_IMAGES
+RUN <<PULL
+for IMAGE in ${APP_IMAGES}; do
+  /opt/physically-bound-images/embed_image.sh ${IMAGE}
+done
+PULL
+
+mkdir -p models/model/1 
+COPY ./model.plan models/model/1
+COPY ./inference/client.py client.py

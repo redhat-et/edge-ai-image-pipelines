@@ -1,0 +1,127 @@
+name: Build RHEL bootc image for Inference Server on Nvidia Tegra
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+    paths:
+      - "tegra/**"
+      - ".github/workflows/build-rhel-bootc-image.yml"
+      - ".github/workflows/build-rhel-bootc-raw-image.yml"
+      - ".github/workflows/tegra.yml"
+jobs:
+  build-tegra-base:
+    uses: ./.github/workflows/build-rhel-bootc-image.yml
+    secrets: inherit
+    with:
+      containerfile: tegra/Containerfile.base
+      dest-image: "redhat-et/rhel-bootc-tegra"
+      tag-list: "base"
+
+  build-tegra-tensorrt:
+    uses: ./.github/workflows/build-rhel-bootc-image.yml
+    secrets: inherit
+    needs: build-tegra-base
+    with:
+      containerfile: inference/Containerfile.trt
+      dest-image: "redhat-et/rhel-bootc-tegra"
+      tag-list: "builder-tensorrt"
+      build-args: |
+        BASE_IMAGE=${{ needs.build-tegra-base.outputs.dest-reference }}
+        APP_IMAGES=nvcr.io/nvidia/tensorrt:25.05-py3-igpu
+        ONNX_ARTIFACT=quay.io/redhat-et/rhel-bootc-tegra:model-onnx
+
+  build-tensorrt-disk-image:
+    uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
+    secrets: inherit
+    needs: build-tegra-tensorrt
+    with:
+      config-file: ./inference/config.toml
+      src-reference: ${{ needs.build.build-tegra-tensorrt.outputs.dest-reference }}
+
+  create-engine:
+    runs-on: ubuntu-24.04-arm
+    container:
+      image: docker.io/fedora:42
+      options: --privileged --device /dev/nvme0n1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Install podman
+        run: dnf -y install podman zstd jq
+      - name: Free up disk space
+        run: |
+          dnf install xfsprogs -y
+          mkfs.xfs /dev/nvme0n1
+          mkdir -p              /var/lib/containers
+          mount    /dev/nvme0n1 /var/lib/containers
+      - name: Workaround open podman-login action issue
+        env:
+          auth: "{ \"auths\": {} }"
+        run: |
+          mkdir -p $HOME/.docker
+          echo $auth > $HOME/.docker/config.json
+      - name: Log in to the Container registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: quay.io
+          username: ${{ secrets.DEST_REGISTRY_USER }}
+          password: ${{ secrets.DEST_REGISTRY_PASSWORD }}
+          auth_file_path: /run/containers/0/auth.json
+      - name: Prepare RHEL bootc image
+        run: |
+          podman artifact pull    quay.io/redhat-et/rhel-bootc-tegra:builder-tensorrt-raw
+          podman artifact extract quay.io/redhat-et/rhel-bootc-tegra:builder-tensorrt-raw image.raw.zst
+          zstd -d image.raw.zst
+
+          uv venv
+          uv pip install --extra-index-url https://pkg.jumpstarter.dev/main/simple jumpstarter-all
+
+          mkdir -p ~/.config/jumpstarter/clients
+          cat <<EOF > ~/.config/jumpstarter/clients/default.yaml
+          ${{ secrets.JUMPSTARTER_CLIENT_CONFIG }}
+          EOF
+          uv run jmp config client use default
+      - name: Acquire lease
+        run: |
+          LEASE=$(uv run jmp create lease --selector name=nvidia-jetson-nx-orin-01-khw-eng-bos2-beaker --duration 01:00:00 --output name)
+          while true; do
+            EXPORTER=$(uv run jmp get leases -o json | jq ".leases[] | select(.name==\"$LEASE\") | .exporter")
+            if [[ -n "$EXPORTER" ]]; then
+              break
+            fi
+            sleep 5
+          done
+          echo "LEASE=$LEASE" >> "$GITHUB_ENV"
+      - name: Run .plan Build
+        run: |
+          uv run jmp shell --lease $LEASE -- python3 inference/jmp-build-engine.py
+      - name: Release lease
+        if: always()
+        run: |
+          uv run jmp delete leases $LEASE
+      - name: Push .plan to Container Registry
+        run: |
+          podman artifact push model.plan quay.io/redhat-et/rhel-bootc-tegra:model-plan
+
+  build-tegra-tis:
+    uses: ./.github/workflows/build-rhel-bootc-image.yml
+    secrets: inherit
+    needs: create-engine
+    with:
+      containerfile: inference/Containerfile.server
+      dest-image: "redhat-et/rhel-bootc-tegra"
+      tag-list: "triton-inference-server"
+      build-args: |
+        BASE_IMAGE=${{ needs.build-tegra-base.outputs.dest-reference }}
+        APP_IMAGES=nvcr.io/nvidia/tritonserver:25.05-py3-igpu nvcr.io/nvidia/tritonserver:25.05-py3-igpu-sdk
+        PLAN_ARTIFACT=quay.io/redhat-et/rhel-bootc-tegra:model-plan
+
+  build-tis-raw:
+    uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
+    secrets: inherit
+    needs: build-tegra-tis
+    with:
+      config-file: ./inference/config.toml
+      src-reference: ${{ needs.build.build-tegra-tis.outputs.dest-reference }}
+
