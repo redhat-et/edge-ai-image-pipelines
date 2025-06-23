@@ -41,6 +41,10 @@ RUN cat <<CFG > /etc/sudoers.d/wheel-nopasswd
 %wheel ALL=(ALL) NOPASSWD: ALL
 CFG
 
+RUN cat <<EOF > /etc/modules-load.d/i2c-dev.conf
+i2c-dev
+EOF
+
 RUN cat <<EOF > /usr/lib/bootc/kargs.d/10-jetson.toml
 kargs = ["enforcing=0", "console=ttyTCU0,115200"]
 EOF
