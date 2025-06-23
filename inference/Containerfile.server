@@ -1,5 +1,9 @@
+ARG PLAN_REGISTRY
+ARG PLAN_REGISTRY_USER
+ARG PLAN_REGISTRY_PASSWORD
+ARG PLAN_URL
+
 ARG BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
-ARG PLAN_ARTIFACT=quay.io/redhat-et/rhel-bootc-tegra:model-plan
 FROM ${BASE_IMAGE}
 
 ADD --chmod=0555 https://gitlab.com/fedora/bootc/examples/-/raw/main/physically-bound-images/embed_image.sh \
@@ -30,6 +34,17 @@ for IMAGE in ${APP_IMAGES}; do
 done
 PULL
 
-mkdir -p models/model/1 
-COPY ./model.plan models/model/1
+RUN <<PULL
+
+mkdir -p models/model/1
+
+mkdir -p dst
+skopeo login ${PLAN_REGISTRY} -u "${PLAN_REGISTRY_USER}" -p "${PLAN_REGISTRY_PASSWORD}"
+skopeo copy docker://${PLAN_URL} dir:dst
+sha=$(jq '.layers[0].digest' manifest.json | cut -d : -f 2)
+sha=${sha::-1}
+mv dst/${sha} models/model/1/model.plan
+
+PULL
+
 COPY ./inference/client.py client.py

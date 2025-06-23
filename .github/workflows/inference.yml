@@ -1,35 +1,25 @@
 name: Build Inference Server on RHEL Bootc Nvidia Tegra
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - "main"
-    paths:
-      - "tegra/**"
-      - ".github/workflows/build-rhel-bootc-image.yml"
-      - ".github/workflows/build-rhel-bootc-raw-image.yml"
-      - ".github/workflows/tegra.yml"
+#  push:
+#    branches:
+#      - "main"
+#    paths:
+#      - "tegra/**"
+#      - ".github/workflows/build-rhel-bootc-image.yml"
+#      - ".github/workflows/build-rhel-bootc-raw-image.yml"
+#      - ".github/workflows/tegra.yml"
 jobs:
-  build-tegra-base:
-    uses: ./.github/workflows/build-rhel-bootc-image.yml
-    secrets: inherit
-    with:
-      containerfile: tegra/Containerfile.base
-      dest-image: "redhat-et/rhel-bootc-tegra"
-      tag-list: "base"
-
   build-tegra-trtexec:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
     secrets: inherit
-    needs: build-tegra-base
     with:
       containerfile: inference/Containerfile.trtexec
       dest-image: "redhat-et/rhel-bootc-tegra"
       tag-list: "builder-tensorrt"
       build-args: |
-        BASE_IMAGE=${{ needs.build-tegra-base.outputs.dest-reference }}
+        BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
         APP_IMAGES=nvcr.io/nvidia/tensorrt:25.05-py3-igpu
-        ONNX_ARTIFACT=quay.io/redhat-et/rhel-bootc-tegra:model-onnx
 
   build-tegra-trtexec-disk-image:
     uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
@@ -75,6 +65,9 @@ jobs:
           podman artifact extract quay.io/redhat-et/rhel-bootc-tegra:builder-tensorrt-raw image.raw.zst
           zstd -d image.raw.zst
 
+          podman artifact pull quay.io/redhat-et/rhel-bootc-tegra:model-onnx
+          podman artifact extract quay.io/redhat-et/rhel-bootc-tegra:model-onnx model.onnx
+
           uv venv
           uv pip install --extra-index-url https://pkg.jumpstarter.dev/main/simple jumpstarter-all
 
@@ -103,7 +96,8 @@ jobs:
           uv run jmp delete leases $LEASE
       - name: Push .plan to Container Registry
         run: |
-          podman artifact push model.plan quay.io/redhat-et/rhel-bootc-tegra:model-plan
+          podman artifact add quay.io/redhat-et/rhel-bootc-tegra:model-plan model.plan
+          podman artifact push quay.io/redhat-et/rhel-bootc-tegra:model-plan
 
   build-tegra-tis:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
@@ -114,9 +108,12 @@ jobs:
       dest-image: "redhat-et/rhel-bootc-tegra"
       tag-list: "triton-inference-server"
       build-args: |
-        BASE_IMAGE=${{ needs.build-tegra-base.outputs.dest-reference }}
+        BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
         APP_IMAGES=nvcr.io/nvidia/tritonserver:25.05-py3-igpu nvcr.io/nvidia/tritonserver:25.05-py3-igpu-sdk
-        PLAN_ARTIFACT=quay.io/redhat-et/rhel-bootc-tegra:model-plan
+        PLAN_URL=quay.io/redhat-et/rhel-bootc-tegra:model-plan
+        PLAN_REGISTRY=quay.io
+        PLAN_REGISTRY_USER=${{ secrets.DEST_REGISTRY_USER }}
+        PLAN_REGISTRY_PASSWORD=${{ secrets.DEST_REGISTRY_PASSWORD }}
 
   build-tis-raw:
     uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
@@ -124,5 +121,4 @@ jobs:
     needs: build-tegra-tis
     with:
       config-file: ./inference/config.toml
-      src-reference: ${{ needs.build.build-tegra-tis.outputs.dest-reference }}
-
+      src-reference: ${{ needs.build-tegra-tis.outputs.dest-reference }}
