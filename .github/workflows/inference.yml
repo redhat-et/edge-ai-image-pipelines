@@ -18,12 +18,12 @@ jobs:
       dest-image: "redhat-et/rhel-bootc-tegra"
       tag-list: "base"
 
-  build-tegra-tensorrt:
+  build-tegra-trtexec:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
     secrets: inherit
     needs: build-tegra-base
     with:
-      containerfile: inference/Containerfile.trt
+      containerfile: inference/Containerfile.trtexec
       dest-image: "redhat-et/rhel-bootc-tegra"
       tag-list: "builder-tensorrt"
       build-args: |
@@ -31,19 +31,20 @@ jobs:
         APP_IMAGES=nvcr.io/nvidia/tensorrt:25.05-py3-igpu
         ONNX_ARTIFACT=quay.io/redhat-et/rhel-bootc-tegra:model-onnx
 
-  build-tensorrt-disk-image:
+  build-tegra-trtexec-disk-image:
     uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
     secrets: inherit
-    needs: build-tegra-tensorrt
+    needs: build-tegra-trtexec
     with:
       config-file: ./inference/config.toml
-      src-reference: ${{ needs.build.build-tegra-tensorrt.outputs.dest-reference }}
+      src-reference: ${{ needs.build.build-tegra-trtexec.outputs.dest-reference }}
 
   create-engine:
     runs-on: ubuntu-24.04-arm
     container:
       image: docker.io/fedora:42
       options: --privileged --device /dev/nvme0n1
+    needs: build-tegra-trtexec-disk-image
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5

@@ -1,4 +1,5 @@
 ARG BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
+ARG PLAN_ARTIFACT=quay.io/redhat-et/rhel-bootc-tegra:model-plan
 FROM ${BASE_IMAGE}
 
 ADD --chmod=0555 https://gitlab.com/fedora/bootc/examples/-/raw/main/physically-bound-images/embed_image.sh \
