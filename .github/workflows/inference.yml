@@ -101,7 +101,16 @@ jobs:
 
   build-tegra-tis:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
-    secrets: inherit
+    secrets:
+      RHT_ORGID: ${{ secrets.RHT_ORGID }}
+      RHT_ACT_KEY: ${{ secrets.RHT_ACT_KEY }}
+      SOURCE_REGISTRY_USER: ${{ secrets.SOURCE_REGISTRY_USER }}
+      SOURCE_REGISTRY_PASSWORD: ${{ secrets.SOURCE_REGISTRY_PASSWORD }}
+      DEST_REGISTRY_USER: ${{ secrets.DEST_REGISTRY_USER }}
+      DEST_REGISTRY_PASSWORD: ${{ secrets.DEST_REGISTRY_PASSWORD }}
+      build-args: |
+        PLAN_REGISTRY_USER=${{ secrets.DEST_REGISTRY_USER }}
+        PLAN_REGISTRY_PASSWORD=${{ secrets.DEST_REGISTRY_PASSWORD }}
     needs: create-engine
     with:
       containerfile: inference/Containerfile.server
@@ -112,8 +121,6 @@ jobs:
         APP_IMAGES=nvcr.io/nvidia/tritonserver:25.05-py3-igpu nvcr.io/nvidia/tritonserver:25.05-py3-igpu-sdk
         PLAN_URL=quay.io/redhat-et/rhel-bootc-tegra:model-plan
         PLAN_REGISTRY=quay.io
-        PLAN_REGISTRY_USER=${{ secrets.DEST_REGISTRY_USER }}
-        PLAN_REGISTRY_PASSWORD=${{ secrets.DEST_REGISTRY_PASSWORD }}
 
   build-tis-raw:
     uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
