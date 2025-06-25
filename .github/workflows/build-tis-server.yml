@@ -1,0 +1,41 @@
+name: Build Just The Inference Server on RHEL Bootc Nvidia Tegra
+on:
+  workflow_dispatch:
+#  push:
+#    branches:
+#      - "main"
+#    paths:
+#      - "tegra/**"
+#      - ".github/workflows/build-rhel-bootc-image.yml"
+#      - ".github/workflows/build-rhel-bootc-raw-image.yml"
+#      - ".github/workflows/tegra.yml"
+jobs:
+  build-tegra-tis:
+    uses: ./.github/workflows/build-rhel-bootc-image.yml
+    secrets:
+      RHT_ORGID: ${{ secrets.RHT_ORGID }}
+      RHT_ACT_KEY: ${{ secrets.RHT_ACT_KEY }}
+      SOURCE_REGISTRY_USER: ${{ secrets.SOURCE_REGISTRY_USER }}
+      SOURCE_REGISTRY_PASSWORD: ${{ secrets.SOURCE_REGISTRY_PASSWORD }}
+      DEST_REGISTRY_USER: ${{ secrets.DEST_REGISTRY_USER }}
+      DEST_REGISTRY_PASSWORD: ${{ secrets.DEST_REGISTRY_PASSWORD }}
+      build-args: |
+        PLAN_REGISTRY_USER=${{ secrets.DEST_REGISTRY_USER }}
+        PLAN_REGISTRY_PASSWORD=${{ secrets.DEST_REGISTRY_PASSWORD }}
+    with:
+      containerfile: inference/Containerfile.server
+      dest-image: "redhat-et/rhel-bootc-tegra"
+      tag-list: "triton-inference-server"
+      build-args: |
+        BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
+        APP_IMAGES=nvcr.io/nvidia/tritonserver:25.05-py3-igpu nvcr.io/nvidia/tritonserver:25.05-py3-igpu-sdk
+        PLAN_URL=quay.io/redhat-et/rhel-bootc-tegra:model-plan
+        PLAN_REGISTRY=quay.io
+
+  build-tis-raw:
+    uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
+    secrets: inherit
+    needs: build-tegra-tis
+    with:
+      config-file: ./inference/config.toml
+      src-reference: ${{ needs.build-tegra-tis.outputs.dest-reference }}
