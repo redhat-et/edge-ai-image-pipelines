@@ -30,7 +30,7 @@ jobs:
           mkdir -p              /var/lib/containers
           mount    /dev/nvme0n1 /var/lib/containers
       - name: Get container tools in UBI builder
-        run: dnf -y --nogpgcheck install podman buildah skopeo jq zstd
+        run: dnf -y --nogpgcheck install podman buildah skopeo jq xz
       # workaround for https://github.com/redhat-actions/podman-login/issues/42 since the docker config from the host doesn't come up to the container
       - name: Workaround open podman-login action issue
         env:
@@ -61,6 +61,6 @@ jobs:
         run: |
           REF="${{ inputs.src-reference }}"
           REF="${REF%@*}-raw"
-          zstd ./output/image/disk.raw -o image.raw.zst
-          podman artifact add  ${REF} image.raw.zst
+          xz ./output/image/disk.raw -o image.raw.xz
+          podman artifact add  ${REF} image.raw.xz
           podman artifact push ${REF}
