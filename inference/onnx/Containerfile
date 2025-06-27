@@ -1,0 +1,6 @@
+FROM docker.io/dustynv/onnxruntime:1.22-r36.4.0-cu128-24.04
+
+pip install opencv-python
+apt install libtesseract-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libtbb12
+
+COPY appfiles .

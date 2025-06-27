@@ -19,6 +19,8 @@ jobs:
   build-rhel-bootc-raw-image:
     name: Build RHEL bootc raw image
     runs-on: ${{ inputs.runs-on }}
+    outputs:
+      dest-reference: ${{ steps.push-raw-image.outputs.dest-reference }}
     container:
       image: registry.access.redhat.com/ubi10/ubi
       options: --privileged --device /dev/nvme0n1
@@ -61,6 +63,7 @@ jobs:
             --output /output --type raw \
             ${{ inputs.src-reference }}
       - name: Push raw image
+        id: push-raw-image
         # TODO: dest-reference is a tag, not a digest. It should be a digest
         run: |
           REF="${{ inputs.src-reference }}"
@@ -69,4 +72,6 @@ jobs:
           xz image.raw
           podman artifact add  ${REF} image.raw.xz
           podman artifact push ${REF}
-          echo "dest-reference=${REF}" >> GITHUB_OUTPUT
+          echo ${REF}
+          echo "dest-reference=${REF}" >> "$GITHUB_OUTPUT"
+          

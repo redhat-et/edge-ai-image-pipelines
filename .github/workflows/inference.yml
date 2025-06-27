@@ -32,14 +32,15 @@ jobs:
   create-engine:
     uses: ./.github/workflows/run-jumpstarter-workflow.yml
     secrets: inherit
-    needs: build-tegra-trtexec-disk-image
+    # needs: build-tegra-trtexec-disk-image
     with:
       jumpstarter-selector: name=nvidia-jetson-nx-orin-01-khw-eng-bos2-beaker
-      image-url: ${{ needs.build-tegra-trtexec-disk-image.outputs.dest-reference }}
+      image-url: quay.io/redhat-et/rhel-bootc-tegra:builder-tensorrt-raw
       workflow-cmd: inference/jmp-build-engine.sh
 
   build-intermediate-tis:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
+    secrets: inherit
     with:
       containerfile: tegra/Containerfile.podman
       dest-image: "redhat-et/rhel-bootc-tegra"
@@ -49,7 +50,7 @@ jobs:
         APP_IMAGES=nvcr.io/nvidia/tritonserver:25.05-py3-igpu-sdk
 
   build-tegra-tis:
-    needs: create-engine
+    needs: [create-engine, build-intermediate-tis]
     uses: ./.github/workflows/build-rhel-bootc-image.yml
     secrets: inherit
     with:
