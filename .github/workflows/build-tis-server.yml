@@ -23,7 +23,7 @@ jobs:
         PLAN_REGISTRY_USER=${{ secrets.DEST_REGISTRY_USER }}
         PLAN_REGISTRY_PASSWORD=${{ secrets.DEST_REGISTRY_PASSWORD }}
     with:
-      containerfile: inference/Containerfile.server
+      containerfile: inference/Containerfile.tis
       dest-image: "redhat-et/rhel-bootc-tegra"
       tag-list: "triton-inference-server"
       build-args: |

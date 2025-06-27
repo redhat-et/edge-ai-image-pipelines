@@ -21,4 +21,4 @@ outputs = [httpclient.InferRequestedOutput("output0")]
 
 response = client.infer(model_name="yolo", inputs=inputs, outputs=outputs)
 output = response.as_numpy("output0")
-print(output[0][0][0])
+print(output)

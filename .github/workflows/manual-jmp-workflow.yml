@@ -1,0 +1,23 @@
+name: Manual Jumpstarter Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      image-url:
+        description: 'Container image URL to deploy'
+        required: true
+        type: string
+      workflow-cmd:
+        description: 'Command to execute on the device'
+        required: true
+        type: string
+        default: 'echo "Hello from Majopela Orin NX!"'
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/run-jumpstarter-workflow.yml
+    with:
+      image-url: ${{ inputs.image-url }}
+      jumpstarter-selector: "name=majopela-orin-nx"
+      workflow-cmd: ${{ inputs.workflow-cmd }}
+    secrets: inherit 

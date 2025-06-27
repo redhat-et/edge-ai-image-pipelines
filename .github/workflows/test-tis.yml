@@ -1,0 +1,71 @@
+name: Test RHEL bootc image
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+    paths:
+      - "tests/**"
+      - ".github/workflows/tests.yml"
+jobs:
+  test-triton-inference-server:
+    runs-on: ubuntu-24.04-arm
+    container:
+      image: docker.io/fedora:42
+      options: --privileged --device /dev/nvme0n1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Install podman
+        run: dnf -y install podman zstd jq
+      - name: Free up disk space
+        run: |
+          dnf install xfsprogs -y
+          mkfs.xfs /dev/nvme0n1
+          mkdir -p              /var/lib/containers
+          mount    /dev/nvme0n1 /var/lib/containers
+      - name: Workaround open podman-login action issue
+        env:
+          auth: "{ \"auths\": {} }"
+        run: |
+          mkdir -p $HOME/.docker
+          echo $auth > $HOME/.docker/config.json
+      - name: Log in to the Container registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: quay.io
+          username: ${{ secrets.DEST_REGISTRY_USER }}
+          password: ${{ secrets.DEST_REGISTRY_PASSWORD }}
+          auth_file_path: /run/containers/0/auth.json
+      - name: Prepare RHEL bootc image
+        run: |
+          podman artifact pull    quay.io/redhat-et/rhel-bootc-tegra:triton-inference-server-raw
+          podman artifact extract quay.io/redhat-et/rhel-bootc-tegra:triton-inference-server-raw image.raw.zst
+          zstd -d image.raw.zst
+
+          uv venv
+          uv pip install --extra-index-url https://pkg.jumpstarter.dev/main/simple jumpstarter-all
+
+          mkdir -p ~/.config/jumpstarter/clients
+          cat <<EOF > ~/.config/jumpstarter/clients/default.yaml
+          ${{ secrets.JUMPSTARTER_CLIENT_CONFIG }}
+          EOF
+          uv run jmp config client use default
+      - name: Acquire lease
+        run: |
+          LEASE=$(uv run jmp create lease --selector name=nvidia-jetson-nx-orin-01-khw-eng-bos2-beaker --duration 01:00:00 --output name)
+          while true; do
+            EXPORTER=$(uv run jmp get leases -o json | jq ".leases[] | select(.name==\"$LEASE\") | .exporter")
+            if [[ -n "$EXPORTER" ]]; then
+              break
+            fi
+            sleep 5
+          done
+          echo "LEASE=$LEASE" >> "$GITHUB_ENV"
+      - name: Test RHEL bootc image
+        run: |
+          uv run jmp shell --lease $LEASE -- python3 inference/tis-test.py
+      - name: Release lease
+        if: always()
+        run: |
+          uv run jmp delete leases $LEASE

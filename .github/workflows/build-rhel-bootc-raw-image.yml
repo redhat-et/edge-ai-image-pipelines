@@ -11,6 +11,9 @@ on:
       src-reference:
         type: string
         required: true
+    outputs:
+      dest-reference:
+        value: ${{ jobs.build-rhel-bootc-raw-image.outputs.dest-reference }}
 
 jobs:
   build-rhel-bootc-raw-image:
@@ -58,9 +61,12 @@ jobs:
             --output /output --type raw \
             ${{ inputs.src-reference }}
       - name: Push raw image
+        # TODO: dest-reference is a tag, not a digest. It should be a digest
         run: |
           REF="${{ inputs.src-reference }}"
           REF="${REF%@*}-raw"
-          xz ./output/image/disk.raw -o image.raw.xz
+          mv ./output/image/disk.raw image.raw
+          xz image.raw
           podman artifact add  ${REF} image.raw.xz
           podman artifact push ${REF}
+          echo "dest-reference=${REF}" >> GITHUB_OUTPUT

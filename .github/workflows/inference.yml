@@ -30,96 +30,38 @@ jobs:
       src-reference: ${{ needs.build-tegra-trtexec.outputs.dest-reference }}
 
   create-engine:
-    runs-on: ubuntu-24.04-arm
-    container:
-      image: docker.io/fedora:42
-      options: --privileged --device /dev/nvme0n1
+    uses: ./.github/workflows/run-jumpstarter-workflow.yml
+    secrets: inherit
     needs: build-tegra-trtexec-disk-image
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-      - name: Install podman
-        run: dnf -y install podman zstd jq
-      - name: Free up disk space
-        run: |
-          dnf install xfsprogs -y
-          mkfs.xfs /dev/nvme0n1
-          mkdir -p              /var/lib/containers
-          mount    /dev/nvme0n1 /var/lib/containers
-      - name: Workaround open podman-login action issue
-        env:
-          auth: "{ \"auths\": {} }"
-        run: |
-          mkdir -p $HOME/.docker
-          echo $auth > $HOME/.docker/config.json
-      - name: Log in to the Container registry
-        uses: redhat-actions/podman-login@v1
-        with:
-          registry: quay.io
-          username: ${{ secrets.DEST_REGISTRY_USER }}
-          password: ${{ secrets.DEST_REGISTRY_PASSWORD }}
-          auth_file_path: /run/containers/0/auth.json
-      - name: Prepare RHEL bootc image
-        run: |
-          podman artifact pull    quay.io/redhat-et/rhel-bootc-tegra:builder-tensorrt-raw
-          podman artifact extract quay.io/redhat-et/rhel-bootc-tegra:builder-tensorrt-raw image.raw.zst
-          zstd -d image.raw.zst
+    with:
+      jumpstarter-selector: name=nvidia-jetson-nx-orin-01-khw-eng-bos2-beaker
+      image-url: ${{ needs.build-tegra-trtexec-disk-image.outputs.dest-reference }}
+      workflow-cmd: inference/jmp-build-engine.sh
 
-          podman artifact pull quay.io/redhat-et/rhel-bootc-tegra:model-onnx
-          podman artifact extract quay.io/redhat-et/rhel-bootc-tegra:model-onnx model.onnx
-
-          uv venv
-          uv pip install --extra-index-url https://pkg.jumpstarter.dev/main/simple jumpstarter-all
-
-          mkdir -p ~/.config/jumpstarter/clients
-          cat <<EOF > ~/.config/jumpstarter/clients/default.yaml
-          ${{ secrets.JUMPSTARTER_CLIENT_CONFIG }}
-          EOF
-          uv run jmp config client use default
-      - name: Acquire lease
-        run: |
-          LEASE=$(uv run jmp create lease --selector name=majopela-orin-nx --duration 01:00:00 --output name)
-          while true; do
-            EXPORTER=$(uv run jmp get leases -o json | jq ".leases[] | select(.name==\"$LEASE\") | .exporter")
-            if [[ -n "$EXPORTER" ]]; then
-              break
-            fi
-            sleep 5
-          done
-          echo "LEASE=$LEASE" >> "$GITHUB_ENV"
-      - name: Run .plan Build
-        run: |
-          uv run jmp shell --lease $LEASE -- python3 inference/jmp-build-engine.py
-      - name: Release lease
-        if: always()
-        run: |
-          uv run jmp delete leases $LEASE
-      - name: Push .plan to Container Registry
-        run: |
-          podman artifact add quay.io/redhat-et/rhel-bootc-tegra:model-plan model.plan
-          podman artifact push quay.io/redhat-et/rhel-bootc-tegra:model-plan
+  build-intermediate-tis:
+    uses: ./.github/workflows/build-rhel-bootc-image.yml
+    with:
+      containerfile: tegra/Containerfile.podman
+      dest-image: "redhat-et/rhel-bootc-tegra"
+      tag-list: "triton-inference-server-intermediate"
+      build-args: |
+        BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
+        APP_IMAGES=nvcr.io/nvidia/tritonserver:25.05-py3-igpu-sdk
 
   build-tegra-tis:
+    needs: create-engine
     uses: ./.github/workflows/build-rhel-bootc-image.yml
-    secrets:
-      RHT_ORGID: ${{ secrets.RHT_ORGID }}
-      RHT_ACT_KEY: ${{ secrets.RHT_ACT_KEY }}
-      SOURCE_REGISTRY_USER: ${{ secrets.SOURCE_REGISTRY_USER }}
-      SOURCE_REGISTRY_PASSWORD: ${{ secrets.SOURCE_REGISTRY_PASSWORD }}
-      DEST_REGISTRY_USER: ${{ secrets.DEST_REGISTRY_USER }}
-      DEST_REGISTRY_PASSWORD: ${{ secrets.DEST_REGISTRY_PASSWORD }}
-      build-args: |
+    env:
+      SECRET_BUILD_ARGS: |
         PLAN_REGISTRY_USER=${{ secrets.DEST_REGISTRY_USER }}
         PLAN_REGISTRY_PASSWORD=${{ secrets.DEST_REGISTRY_PASSWORD }}
-    needs: create-engine
     with:
-      containerfile: inference/Containerfile.server
+      containerfile: inference/Containerfile.tis
       dest-image: "redhat-et/rhel-bootc-tegra"
       tag-list: "triton-inference-server"
       build-args: |
-        BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
-        APP_IMAGES=nvcr.io/nvidia/tritonserver:25.05-py3-igpu nvcr.io/nvidia/tritonserver:25.05-py3-igpu-sdk
-        PLAN_URL=quay.io/redhat-et/rhel-bootc-tegra:model-plan
+        BASE_IMAGE=${{ needs.build-intermediate-tis.outputs.dest-reference }}
+        PLAN_ARTIFACT_URL=quay.io/redhat-et/rhel-bootc-tegra:model-plan 
         PLAN_REGISTRY=quay.io
 
   build-tis-raw:
@@ -129,3 +71,12 @@ jobs:
     with:
       config-file: ./inference/config.toml
       src-reference: ${{ needs.build-tegra-tis.outputs.dest-reference }}
+
+  test-tis:
+    uses: ./.github/workflows/run-jumpstarter-workflow.yml
+    secrets: inherit
+    needs: built-tis-raw
+    with:
+      jumpstarter-selector: name=nvidia-jetson-nx-orin-01-khw-eng-bos2-beaker
+      image-url: ${{ needs.build-tis-raw.outputs.dest-reference }}
+      workflow-cmd: python3 inference/jmp-test-tis.py
