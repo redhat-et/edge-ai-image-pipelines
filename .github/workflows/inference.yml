@@ -51,10 +51,7 @@ jobs:
   build-tegra-tis:
     needs: create-engine
     uses: ./.github/workflows/build-rhel-bootc-image.yml
-    env:
-      SECRET_BUILD_ARGS: |
-        PLAN_REGISTRY_USER=${{ secrets.DEST_REGISTRY_USER }}
-        PLAN_REGISTRY_PASSWORD=${{ secrets.DEST_REGISTRY_PASSWORD }}
+    secrets: inherit
     with:
       containerfile: inference/Containerfile.tis
       dest-image: "redhat-et/rhel-bootc-tegra"
@@ -75,7 +72,7 @@ jobs:
   test-tis:
     uses: ./.github/workflows/run-jumpstarter-workflow.yml
     secrets: inherit
-    needs: built-tis-raw
+    needs: build-tis-raw
     with:
       jumpstarter-selector: name=nvidia-jetson-nx-orin-01-khw-eng-bos2-beaker
       image-url: ${{ needs.build-tis-raw.outputs.dest-reference }}
