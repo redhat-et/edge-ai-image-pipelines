@@ -122,6 +122,7 @@ jobs:
           tags: ${{ env.TAGLIST }}
           containerfiles: ${{ env.CONTAINERFILE }}
           build-args: ${{ inputs.build-args }} ${{ secrets.SECRET_BUILD_ARGS }}
+          content: /run/containers/0/auth.json
 
       - name: Push to Container Repository
         id: push-to-ghcr

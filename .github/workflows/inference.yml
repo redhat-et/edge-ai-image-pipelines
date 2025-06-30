@@ -10,57 +10,35 @@ on:
 #      - ".github/workflows/build-rhel-bootc-raw-image.yml"
 #      - ".github/workflows/tegra.yml"
 jobs:
-  build-tegra-trtexec:
-    uses: ./.github/workflows/build-rhel-bootc-image.yml
-    secrets: inherit
-    with:
-      containerfile: inference/Containerfile.trtexec
-      dest-image: "redhat-et/rhel-bootc-tegra"
-      tag-list: "builder-tensorrt"
-      build-args: |
-        BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
-        APP_IMAGES=nvcr.io/nvidia/tensorrt:25.05-py3-igpu
-
-  build-tegra-trtexec-disk-image:
-    uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
-    secrets: inherit
-    needs: build-tegra-trtexec
-    with:
-      config-file: ./inference/config.toml
-      src-reference: ${{ needs.build-tegra-trtexec.outputs.dest-reference }}
-
   create-engine:
     uses: ./.github/workflows/run-jumpstarter-workflow.yml
     secrets: inherit
-    # needs: build-tegra-trtexec-disk-image
     with:
       jumpstarter-selector: name=nvidia-jetson-nx-orin-01-khw-eng-bos2-beaker
       image-url: quay.io/redhat-et/rhel-bootc-tegra:builder-tensorrt-raw
-      workflow-cmd: inference/jmp-build-engine.sh
+      workflow-cmd: bash inference/jmp-build-engine.sh
 
   build-intermediate-tis:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
     secrets: inherit
     with:
       containerfile: tegra/Containerfile.podman
-      dest-image: "redhat-et/rhel-bootc-tegra"
+      dest-image: "redhat-et/rhel-bootc-tegra-artifacts"
       tag-list: "triton-inference-server-intermediate"
       build-args: |
         BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
-        APP_IMAGES=nvcr.io/nvidia/tritonserver:25.05-py3-igpu-sdk
+        APP_IMAGES=nvcr.io/nvidia/tritonserver:25.05-py3-igpu nvcr.io/nvidia/tritonserver:25.05-py3-igpu-sdk
 
   build-tegra-tis:
     needs: [create-engine, build-intermediate-tis]
     uses: ./.github/workflows/build-rhel-bootc-image.yml
-    secrets: inherit
     with:
       containerfile: inference/Containerfile.tis
       dest-image: "redhat-et/rhel-bootc-tegra"
       tag-list: "triton-inference-server"
       build-args: |
         BASE_IMAGE=${{ needs.build-intermediate-tis.outputs.dest-reference }}
-        PLAN_ARTIFACT_URL=quay.io/redhat-et/rhel-bootc-tegra:model-plan 
-        PLAN_REGISTRY=quay.io
+        PLAN_ARTIFACT_URL=quay.io/redhat-et/rhel-bootc-tegra-artifacts:model-plan 
 
   build-tis-raw:
     uses: ./.github/workflows/build-rhel-bootc-raw-image.yml

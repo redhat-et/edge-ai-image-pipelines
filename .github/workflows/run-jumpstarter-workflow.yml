@@ -43,9 +43,6 @@ jobs:
           auth_file_path: /run/containers/0/auth.json
       - name: Prepare Bootc Image
         run: |
-          podman artifact pull    ${{ inputs.image-url }}
-          podman artifact extract ${{ inputs.image-url }} image.raw.xz
-
           uv venv
           uv pip install --extra-index-url https://pkg.jumpstarter.dev/main/simple jumpstarter-all
 
@@ -65,6 +62,15 @@ jobs:
             sleep 5
           done
           echo "LEASE=$LEASE" >> "$GITHUB_ENV"
+      - name: Flash bootc image
+        # users have the option to not provide an image, in which case we just run the workflow-cmd
+        # I can imagine this may lead to a confusing UX
+        if: ${{ inputs.image-url != '' }}
+        run: |
+          podman artifact pull    ${{ inputs.image-url }}
+          podman artifact extract ${{ inputs.image-url }} image.raw.xz
+          uv run jmp shell --lease $LEASE -- j storage dut
+          uv run jmp shell --lease $LEASE -- j storage flash image.raw.xz --compression=xz
       - name: Test RHEL bootc image
         run: |
           uv run jmp shell --lease $LEASE -- ${{ inputs.workflow-cmd }}

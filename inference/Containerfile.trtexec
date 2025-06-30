@@ -30,4 +30,9 @@ for IMAGE in ${APP_IMAGES}; do
 done
 PULL
 
+RUN <<PULL
+podman artifact pull ${ONNX_ARTIFACT}
+podman artifact extract ${ONNX_ARTIFACT} model.onnx
+PULL
+
 

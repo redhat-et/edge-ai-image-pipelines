@@ -30,11 +30,10 @@ with env() as client:
         connect_kwargs={"password": PASSWORD},
     ) as ssh:
         ssh.put("model.onnx","model.onnx")
-        ssh.sudo("mkdir -p share")
         ssh.sudo("mv model.onnx share")
         ssh.sudo(
-            "podman run --name trtexec -i --rm --device nvidia.com/gpu=all -v ./share:/share --replace nvcr.io/nvidia/tensorrt:25.05-py3-igpu trtexec --onnx=/share/model.onnx --saveEngine=/share/model.plan"
+            "podman run --name trtexec -i --rm --device nvidia.com/gpu=all -v .:/share --replace nvcr.io/nvidia/tensorrt:25.05-py3-igpu trtexec --onnx=/share/model.onnx --saveEngine=/share/model.plan"
         )
-        ssh.get("share/model.plan","model.plan")
+        ssh.get("model.plan","model.plan")
 
     client.power.off()

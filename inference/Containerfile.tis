@@ -1,19 +1,18 @@
 ARG BASE_IMAGE
-ARG PLAN_REGISTRY
-ARG PLAN_REGISTRY_USER
-ARG PLAN_REGISTRY_PASSWORD
 ARG PLAN_URL
 
 FROM ${BASE_IMAGE}
 
+RUN <<SETUP
+cp /run/containers/0/auth.json $XDG_RUNTIME_DIR/auth.json
+
 mkdir -p models/model/1
 
 mkdir -p dst
-skopeo login ${PLAN_REGISTRY} -u "${PLAN_REGISTRY_USER}" -p "${PLAN_REGISTRY_PASSWORD}"
 skopeo copy docker://${PLAN_URL} dir:dst
 sha=$(jq '.layers[0].digest' manifest.json | cut -d : -f 2)
 sha=${sha::-1}
 mv dst/${sha} models/model/1/model.plan
-PULL
+SETUP
 
 COPY ./inference/tis-client.py tis-client.py
