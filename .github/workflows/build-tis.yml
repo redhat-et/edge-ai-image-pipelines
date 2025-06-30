@@ -9,14 +9,15 @@ on:
 #      - ".github/workflows/build-rhel-bootc-image.yml"
 #      - ".github/workflows/build-rhel-bootc-raw-image.yml"
 #      - ".github/workflows/tegra.yml"
+  workflow_call:
 jobs:
   create-engine:
     uses: ./.github/workflows/run-jumpstarter-workflow.yml
     secrets: inherit
     with:
       jumpstarter-selector: name=nvidia-jetson-nx-orin-01-khw-eng-bos2-beaker
-      image-url: quay.io/redhat-et/rhel-bootc-tegra:builder-tensorrt-raw
-      workflow-cmd: bash inference/jmp-build-engine.sh
+      image-url: #quay.io/redhat-et/rhel-bootc-tegra:builder-tensorrt-raw
+      workflow-cmd: bash inference/jmp-build-engine.sh quay.io/redhat-et/rhel-bootc-tegra-artifacts:model-onnx quay.io/redhat-et/rhel-bootc-tegra-artifacts:model-plan
 
   build-intermediate-tis:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
@@ -45,7 +46,7 @@ jobs:
     secrets: inherit
     needs: build-tegra-tis
     with:
-      config-file: ./inference/config.toml
+      config-file: ./tegra/config.toml
       src-reference: ${{ needs.build-tegra-tis.outputs.dest-reference }}
 
   test-tis:

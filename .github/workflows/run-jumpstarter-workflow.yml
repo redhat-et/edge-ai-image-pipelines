@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - name: Install podman
-        run: dnf -y install podman zstd jq
+        run: dnf -y install podman jq xz
       - name: Free up disk space
         run: |
           dnf install xfsprogs -y
@@ -45,12 +45,13 @@ jobs:
         run: |
           uv venv
           uv pip install --extra-index-url https://pkg.jumpstarter.dev/main/simple jumpstarter-all
-
+          
           mkdir -p ~/.config/jumpstarter/clients
           cat <<EOF > ~/.config/jumpstarter/clients/default.yaml
           ${{ secrets.JUMPSTARTER_CLIENT_CONFIG }}
           EOF
           uv run jmp config client use default
+
       - name: Acquire lease
         run: |
           LEASE=$(uv run jmp create lease --selector ${{ inputs.jumpstarter-selector }} --duration 01:00:00 --output name)
@@ -69,8 +70,9 @@ jobs:
         run: |
           podman artifact pull    ${{ inputs.image-url }}
           podman artifact extract ${{ inputs.image-url }} image.raw.xz
+          xz -d image.raw.xz
           uv run jmp shell --lease $LEASE -- j storage dut
-          uv run jmp shell --lease $LEASE -- j storage flash image.raw.xz --compression=xz
+          uv run jmp shell --lease $LEASE -- j storage flash image.raw
       - name: Test RHEL bootc image
         run: |
           uv run jmp shell --lease $LEASE -- ${{ inputs.workflow-cmd }}

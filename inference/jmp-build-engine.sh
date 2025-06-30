@@ -1,9 +1,9 @@
 #!/bin/bash
 
-podman artifact pull $ONNX_ARTIFACT
-podman artifact extract $ONNX_ARTIFACT model.onnx
+podman artifact pull $1
+podman artifact extract $1 model.onnx
 
 python3 inference/jmp-build-engine.py
 
-podman artifact add quay.io/redhat-et/rhel-bootc-tegra-artifacts:model-plan model.plan
-podman artifact push quay.io/redhat-et/rhel-bootc-tegra-artifacts:model-plan
+podman artifact add $2 model.plan
+podman artifact push $2
