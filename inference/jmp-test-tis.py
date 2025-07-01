@@ -29,11 +29,16 @@ with env() as client:
         user=USERNAME,
         connect_kwargs={"password": PASSWORD},
     ) as ssh:
+        ssh.put("inference/tis-client.py","client.py")
+        ssh.put("inference/tis-client.sh","client.sh")
         ssh.sudo(
-                "podman run --name server --rm -d --device nvidia.com/gpu=all --ipc=host -v ./models:/models nvcr.io/nvidia/tritonserver:25.05-py3-igpu tritonserver --model-repository=/models"
+            "podman network create triton"
         )
         ssh.sudo(
-                "podman run --name client --rm -v .:/share nvcr.io/nvidia/tritonserver:25.05-py3-igpu-sdk python3 /share/client.py"
+                "podman run --name server --rm -d --device nvidia.com/gpu=all --ipc=host -v .:/share --network triton -p8000:8000nvcr.io/nvidia/tritonserver:25.05-py3-igpu tritonserver --model-repository=/share/models"
+        )
+        ssh.sudo(
+                "podman run --name client --network triton--rm -v .:/share nvcr.io/nvidia/tritonserver:25.05-py3-igpu /bin/bash /share/client.sh"
         )
 
     client.power.off()

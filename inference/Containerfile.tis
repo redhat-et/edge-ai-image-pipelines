@@ -14,5 +14,3 @@ sha=$(jq '.layers[0].digest' manifest.json | cut -d : -f 2)
 sha=${sha::-1}
 mv dst/${sha} models/model/1/model.plan
 SETUP
-
-COPY ./inference/tis-client.py tis-client.py

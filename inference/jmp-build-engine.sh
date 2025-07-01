@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 podman artifact pull $1
 podman artifact extract $1 model.onnx
 

@@ -16,7 +16,7 @@ jobs:
     secrets: inherit
     with:
       jumpstarter-selector: name=nvidia-jetson-nx-orin-01-khw-eng-bos2-beaker
-      image-url: #quay.io/redhat-et/rhel-bootc-tegra:builder-tensorrt-raw
+      image-url: #quay.io/redhat-et/rhel-bootc-tegra:tensorrt-raw
       workflow-cmd: bash inference/jmp-build-engine.sh quay.io/redhat-et/rhel-bootc-tegra-artifacts:model-onnx quay.io/redhat-et/rhel-bootc-tegra-artifacts:model-plan
 
   build-intermediate-tis:
@@ -31,15 +31,16 @@ jobs:
         APP_IMAGES=nvcr.io/nvidia/tritonserver:25.05-py3-igpu nvcr.io/nvidia/tritonserver:25.05-py3-igpu-sdk
 
   build-tegra-tis:
-    needs: [create-engine, build-intermediate-tis]
+    # needs: [create-engine, build-intermediate-tis]
     uses: ./.github/workflows/build-rhel-bootc-image.yml
+    secrets: inherit
     with:
       containerfile: inference/Containerfile.tis
       dest-image: "redhat-et/rhel-bootc-tegra"
       tag-list: "triton-inference-server"
       build-args: |
-        BASE_IMAGE=${{ needs.build-intermediate-tis.outputs.dest-reference }}
-        PLAN_ARTIFACT_URL=quay.io/redhat-et/rhel-bootc-tegra-artifacts:model-plan 
+        BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra-artifacts:triton-inference-server-intermediate
+        PLAN_ARTIFACT_URL=quay.io/redhat-et/rhel-bootc-tegra-artifacts:model-plan
 
   build-tis-raw:
     uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
