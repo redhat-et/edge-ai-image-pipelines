@@ -12,7 +12,7 @@ on:
         type: string
         required: true
 jobs:
-  test-tegra-base-image:
+  jumpstarter-workflow:
     runs-on: ubuntu-24.04-arm
     container:
       image: docker.io/fedora:42
@@ -37,11 +37,19 @@ jobs:
       - name: Log in to the Container registry
         uses: redhat-actions/podman-login@v1
         with:
-          registry: quay.io
+          registry: ${{ vars.DEST_REGISTRY_HOST }}
           username: ${{ secrets.DEST_REGISTRY_USER }}
           password: ${{ secrets.DEST_REGISTRY_PASSWORD }}
           auth_file_path: /run/containers/0/auth.json
-      - name: Prepare Bootc Image
+      - name: Log in to the Artifact registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ${{ vars.ARTIFACT_REGISTRY_HOST }}
+          username: ${{ secrets.ARTIFACT_REGISTRY_USER }}
+          password: ${{ secrets.ARTIFACT_REGISTRY_PASSWORD }}
+          auth_file_path: /run/containers/0/auth.json
+          logout: false
+      - name: Install Jumpstarter
         run: |
           uv venv -p python3.12
           uv pip install --extra-index-url https://pkg.jumpstarter.dev/simple/release-0.6 jumpstarter-all
@@ -63,6 +71,7 @@ jobs:
             sleep 5
           done
           echo "LEASE=$LEASE" >> "$GITHUB_ENV"
+
       - name: Flash bootc image
         # users have the option to not provide an image, in which case we just run the workflow-cmd
         # I can imagine this may lead to a confusing UX
@@ -73,7 +82,8 @@ jobs:
           xz -d image.raw.xz
           uv run jmp shell --lease $LEASE -- j storage dut
           uv run jmp shell --lease $LEASE -- j storage flash image.raw
-      - name: Test RHEL bootc image
+
+      - name: 
         run: |
           uv run jmp shell --lease $LEASE -- ${{ inputs.workflow-cmd }}
       - name: Release lease

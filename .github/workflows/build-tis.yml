@@ -1,46 +1,61 @@
 name: Build Inference Server on RHEL Bootc Nvidia Tegra
 on:
   workflow_dispatch:
-#  push:
-#    branches:
-#      - "main"
-#    paths:
-#      - "tegra/**"
-#      - ".github/workflows/build-rhel-bootc-image.yml"
-#      - ".github/workflows/build-rhel-bootc-raw-image.yml"
-#      - ".github/workflows/tegra.yml"
   workflow_call:
 jobs:
-  create-engine:
-    uses: ./.github/workflows/run-jumpstarter-workflow.yml
+  build-tensorrt:
+    uses: ./.github/workflows/build-rhel-bootc-image.yml
     secrets: inherit
     with:
-      jumpstarter-selector: name=nvidia-jetson-nx-orin-01-khw-eng-bos2-beaker
-      image-url: #quay.io/redhat-et/rhel-bootc-tegra:tensorrt-raw
-      workflow-cmd: bash inference/jmp-build-engine.sh quay.io/redhat-et/rhel-bootc-tegra-artifacts:model-onnx quay.io/redhat-et/rhel-bootc-tegra-artifacts:model-plan
+      containerfile: tegra/Containerfile.podman
+      dest-host: ${{ vars.DEST_REGISTRY_HOST }}
+      dest-image: ${{ vars.DEST_REGISTRY_REPO }}
+      tag-list: "tensorrt"
+      build-args: |
+        BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
+        APP_IMAGES=nvcr.io/nvidia/tensorrt:25.05-py3-igpu
+
+  build-tensorrt-raw:
+    uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
+    secrets: inherit
+    needs: build-tensorrt
+    with:
+      config-file: ./tegra/config.toml
+      src-reference: ${{ needs.build-tensorrt.outputs.dest-reference }}
+
+  build-engine:
+    uses: ./.github/workflows/run-jumpstarter-workflow.yml
+    secrets: inherit
+    needs: build-tensorrt-raw
+    with:
+      jumpstarter-selector: ${{ vars.JUMPSTARTER_SELECTOR }}
+      image-url: ${{ needs.build-tensorrt-raw.outputs.dest-reference }}
+      workflow-cmd: bash inference/jmp-build-engine.sh ${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:model-onnx ${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:model-plan
 
   build-intermediate-tis:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
     secrets: inherit
     with:
       containerfile: tegra/Containerfile.podman
-      dest-image: "redhat-et/rhel-bootc-tegra-artifacts"
+      dest-host: ${{ vars.ARTIFACT_REGISTRY_HOST }}
+      dest-image: ${{ vars.ARTIFACT_REGISTRY_REPO }}
       tag-list: "triton-inference-server-intermediate"
       build-args: |
         BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
-        APP_IMAGES=nvcr.io/nvidia/tritonserver:25.05-py3-igpu nvcr.io/nvidia/tritonserver:25.05-py3-igpu-sdk
+        APP_IMAGES=nvcr.io/nvidia/tritonserver:25.05-py3-igpu
 
   build-tegra-tis:
-    # needs: [create-engine, build-intermediate-tis]
+    needs: [build-engine, build-intermediate-tis]
     uses: ./.github/workflows/build-rhel-bootc-image.yml
     secrets: inherit
     with:
       containerfile: inference/Containerfile.tis
-      dest-image: "redhat-et/rhel-bootc-tegra"
+      dest-host: ${{ vars.DEST_REGISTRY_HOST }}
+      dest-image: ${{ vars.DEST_REGISTRY_REPO }}
       tag-list: "triton-inference-server"
       build-args: |
-        BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra-artifacts:triton-inference-server-intermediate
-        PLAN_ARTIFACT_URL=quay.io/redhat-et/rhel-bootc-tegra-artifacts:model-plan
+        BASE_IMAGE=${{ needs.build-intermediate-tis.outputs.dest-reference }}
+        PLAN_ARTIFACT_URL=${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:model-plan
 
   build-tis-raw:
     uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
@@ -55,6 +70,6 @@ jobs:
     secrets: inherit
     needs: build-tis-raw
     with:
-      jumpstarter-selector: name=nvidia-jetson-nx-orin-01-khw-eng-bos2-beaker
+      jumpstarter-selector: ${{ vars.JUMPSTARTER_SELECTOR }}
       image-url: ${{ needs.build-tis-raw.outputs.dest-reference }}
       workflow-cmd: python3 inference/jmp-test-tis.py

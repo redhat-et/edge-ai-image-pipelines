@@ -9,6 +9,10 @@ on:
       dest-image:
         type: string
         required: true
+      dest-host:
+        type: string
+        required: false
+        default: quay.io
       build-args:
         type: string
         required: false
@@ -31,19 +35,6 @@ jobs:
     env:
       # Disable Subscription Manager container passthrough
       SMDEV_CONTAINER_OFF: 1
-
-      # Registry hosts
-      SOURCE_REGISTRY_HOST: registry.redhat.io
-      DEST_REGISTRY_HOST: quay.io
-
-      # Destination image namespace and name (eg: myrepo/myimage)
-      DEST_IMAGE: ${{ inputs.dest-image }}
-
-      # List of tags to publish
-      TAGLIST: ${{ inputs.tag-list }}
-
-      # Containerfile to build
-      CONTAINERFILE: ${{ inputs.containerfile }}
 
     container:
       image: registry.access.redhat.com/ubi10/ubi
@@ -86,7 +77,7 @@ jobs:
       - name: Log in to the RHT terms based registry
         uses: redhat-actions/podman-login@v1
         with:
-          registry: ${{ env.SOURCE_REGISTRY_HOST }}
+          registry: ${{ vars.SOURCE_REGISTRY_HOST }}
           username: ${{ secrets.SOURCE_REGISTRY_USER }}
           password: ${{ secrets.SOURCE_REGISTRY_PASSWORD }}
           auth_file_path: /run/containers/0/auth.json
@@ -94,19 +85,27 @@ jobs:
       - name: Log in to the Container registry
         uses: redhat-actions/podman-login@v1
         with:
-          registry: ${{ env.DEST_REGISTRY_HOST }}
+          registry: ${{ vars.DEST_REGISTRY_HOST }}
           username: ${{ secrets.DEST_REGISTRY_USER }}
           password: ${{ secrets.DEST_REGISTRY_PASSWORD }}
           auth_file_path: /run/containers/0/auth.json
 
+      - name: Log in to the Artifact registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ${{ vars.ARTIFACT_REGISTRY_HOST }}
+          username: ${{ secrets.ARTIFACT_REGISTRY_USER }}
+          password: ${{ secrets.ARTIFACT_REGISTRY_PASSWORD }}
+          auth_file_path: /run/containers/0/auth.json
+          logout: false
       - name: Use buildah bud to create the image
         id: build-image
         uses: redhat-actions/buildah-build@v2
         with:
-          image: ${{ env.DEST_IMAGE }}
-          tags: ${{ env.TAGLIST }}
-          containerfiles: ${{ env.CONTAINERFILE }}
-          build-args: ${{ inputs.build-args }} ${{ secrets.SECRET_BUILD_ARGS }}
+          image: ${{ inputs.dest-image }}
+          tags: ${{ inputs.tag-list }}
+          containerfiles: ${{ inputs.containerfile }}
+          build-args: ${{ inputs.build-args }}
           content: /run/containers/0/auth.json
 
       - name: Push to Container Repository
@@ -115,7 +114,7 @@ jobs:
         with:
           image: ${{ steps.build-image.outputs.image }}
           tags: ${{ steps.build-image.outputs.tags }}
-          registry: ${{ env.DEST_REGISTRY_HOST }}
+          registry: ${{ inputs.dest-host }}
 
       - name: Clean up the subscription
         if: always()

@@ -46,10 +46,19 @@ jobs:
       - name: Log in to the Container registry
         uses: redhat-actions/podman-login@v1
         with:
-          registry: quay.io
+          registry: ${{ vars.DEST_REGISTRY_HOST }}
           username: ${{ secrets.DEST_REGISTRY_USER }}
           password: ${{ secrets.DEST_REGISTRY_PASSWORD }}
           auth_file_path: /run/containers/0/auth.json
+      - name: Log in to the Artifact registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ${{ vars.ARTIFACT_REGISTRY_HOST }}
+          username: ${{ secrets.ARTIFACT_REGISTRY_USER }}
+          password: ${{ secrets.ARTIFACT_REGISTRY_PASSWORD }}
+          auth_file_path: /run/containers/0/auth.json
+          logout: false
+          
       - name: Build raw image
         run: |
           mkdir -p ./output
@@ -72,6 +81,5 @@ jobs:
           xz image.raw
           podman artifact add  ${REF} image.raw.xz
           podman artifact push ${REF}
-          echo ${REF}
           echo "dest-reference=${REF}" >> "$GITHUB_OUTPUT"
           
