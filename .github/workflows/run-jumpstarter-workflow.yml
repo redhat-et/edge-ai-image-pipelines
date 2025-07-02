@@ -44,7 +44,7 @@ jobs:
       - name: Prepare Bootc Image
         run: |
           uv venv
-          uv pip install --extra-index-url https://pkg.jumpstarter.dev/main/simple jumpstarter-all
+          uv pip install --extra-index-url https://pkg.jumpstarter.dev/simple/release-0.6 jumpstarter-all
           
           mkdir -p ~/.config/jumpstarter/clients
           cat <<EOF > ~/.config/jumpstarter/clients/default.yaml
