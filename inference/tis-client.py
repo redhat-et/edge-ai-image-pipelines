@@ -22,6 +22,6 @@ inputs = [httpclient.InferInput("images", img.shape, "FP32")]
 inputs[0].set_data_from_numpy(img)
 outputs = [httpclient.InferRequestedOutput("output0")]
 
-response = client.infer(model_name="yolo", inputs=inputs, outputs=outputs)
+response = client.infer(model_name="model", inputs=inputs, outputs=outputs)
 output = response.as_numpy("output0")
 print(output)
