@@ -1,0 +1,55 @@
+name: Run Misc Jumpstarter Workflow
+on:
+  workflow_dispatch:
+jobs:
+  jumpstarter-workflow:
+    runs-on: ubuntu-24.04-arm
+    container:
+      image: docker.io/fedora:42
+      options: --privileged --device /dev/nvme0n1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Install podman
+        run: dnf -y install podman jq xz python3.12
+      - name: Free up disk space
+        run: |
+          dnf install xfsprogs -y
+          mkfs.xfs /dev/nvme0n1
+          mkdir -p              /var/lib/containers
+          mount    /dev/nvme0n1 /var/lib/containers
+      - name: Workaround open podman-login action issue
+        env:
+          auth: "{ \"auths\": {} }"
+        run: |
+          mkdir -p $HOME/.docker
+          echo $auth > $HOME/.docker/config.json
+      - name: Log in to the Container registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ${{ vars.DEST_REGISTRY_HOST }}
+          username: ${{ secrets.DEST_REGISTRY_USER }}
+          password: ${{ secrets.DEST_REGISTRY_PASSWORD }}
+          auth_file_path: /run/containers/0/auth.json
+      - name: Log in to the Artifact registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ${{ vars.ARTIFACT_REGISTRY_HOST }}
+          username: ${{ secrets.ARTIFACT_REGISTRY_USER }}
+          password: ${{ secrets.ARTIFACT_REGISTRY_PASSWORD }}
+          auth_file_path: /run/containers/0/auth.json
+          logout: false
+      - name: Install Jumpstarter
+        run: |
+          uv venv -p python3.12
+          uv pip install --extra-index-url https://pkg.jumpstarter.dev/simple/release-0.6 jumpstarter-all
+          
+          mkdir -p ~/.config/jumpstarter/clients
+          cat <<EOF > ~/.config/jumpstarter/clients/default.yaml
+          ${{ secrets.JUMPSTARTER_CLIENT_CONFIG }}
+          EOF
+          uv run jmp config client use default
+
+      - name: Delete all leases (sorry Nick)
+        run: |
+          uv run jmp delete leases --all
