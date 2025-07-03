@@ -98,6 +98,11 @@ jobs:
           password: ${{ secrets.ARTIFACT_REGISTRY_PASSWORD }}
           auth_file_path: /run/containers/0/auth.json
           logout: false
+
+      - name: Make auth.json accessible in container build context
+        run: |
+          cp /run/containers/0/auth.json .
+
       - name: Use buildah bud to create the image
         id: build-image
         uses: redhat-actions/buildah-build@v2
@@ -106,7 +111,6 @@ jobs:
           tags: ${{ inputs.tag-list }}
           containerfiles: ${{ inputs.containerfile }}
           build-args: ${{ inputs.build-args }}
-          content: /run/containers/0/auth.json
 
       - name: Push to Container Repository
         id: push-to-ghcr

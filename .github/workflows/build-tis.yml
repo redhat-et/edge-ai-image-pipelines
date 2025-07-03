@@ -54,8 +54,8 @@ jobs:
       dest-image: ${{ vars.DEST_REGISTRY_REPO }}
       tag-list: "triton-inference-server"
       build-args: |
-        BASE_IMAGE=${{ needs.build-intermediate-tis.outputs.dest-reference }}
-        PLAN_ARTIFACT_URL=${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:model-plan
+        BASE_IMAGE=${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:triton-inference-server-intermediate
+        PLAN_ARTIFACT=${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:model-plan
 
   build-tis-raw:
     uses: ./.github/workflows/build-rhel-bootc-raw-image.yml

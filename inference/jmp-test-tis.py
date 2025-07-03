@@ -38,7 +38,7 @@ with env() as client:
                 "podman network create triton"
             )
         ssh.sudo("podman rm -af")
-        
+        ssh.sudo("ls -R") 
         ssh.sudo(
                 "podman run --name server --network trition -p8000:8000 --rm -d --device nvidia.com/gpu=all --ipc=host -v .:/share nvcr.io/nvidia/tritonserver:25.05-py3-igpu tritonserver --model-repository=/share/models"
         )
