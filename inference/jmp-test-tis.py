@@ -35,10 +35,10 @@ with env() as client:
             "podman network create triton"
         )
         ssh.sudo(
-                "podman run --name server --rm -d --device nvidia.com/gpu=all --ipc=host -v .:/share --network triton -p8000:8000nvcr.io/nvidia/tritonserver:25.05-py3-igpu tritonserver --model-repository=/share/models"
+                "podman run --name server --rm -d --device nvidia.com/gpu=all --ipc=host -v .:/share --network triton -p8000:8000 nvcr.io/nvidia/tritonserver:25.05-py3-igpu tritonserver --model-repository=/share/models"
         )
         ssh.sudo(
-                "podman run --name client --network triton--rm -v .:/share nvcr.io/nvidia/tritonserver:25.05-py3-igpu /bin/bash /share/client.sh"
+                "podman run --name client --network triton --rm -v .:/share nvcr.io/nvidia/tritonserver:25.05-py3-igpu /bin/bash /share/client.sh"
         )
 
     client.power.off()
