@@ -99,9 +99,11 @@ jobs:
           auth_file_path: /run/containers/0/auth.json
           logout: false
 
-      - name: Make auth.json accessible in container build context
+      - name: Prepare OpenShift Pull Secret
         run: |
-          cp /run/containers/0/auth.json .
+          cat  <<EOF > pull-secret.json
+          ${{ secrets.OPENSHIFT_PULL_SECRET }}
+          EOF
 
       - name: Use buildah bud to create the image
         id: build-image
@@ -111,6 +113,7 @@ jobs:
           tags: ${{ inputs.tag-list }}
           containerfiles: ${{ inputs.containerfile }}
           build-args: ${{ inputs.build-args }}
+          extra-args: --secret id=podman-auth,src=/run/containers/0/auth.json --secret id=openshift-pull-secret,src=pull-secret.json
 
       - name: Push to Container Repository
         id: push-to-ghcr

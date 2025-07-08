@@ -42,7 +42,7 @@ RUN systemctl enable microshift-make-rshared.service
 # - Sub-directories are named after the image reference string SHA
 # - An image list file maps image references to their name SHA
 # hadolint ignore=DL4006
-RUN --mount=type=secret,id=pullsecret,dst=/run/secrets/pull-secret.json \
+RUN --mount=type=secret,id=openshift-pull-secret,dst=/run/secrets/pull-secret.json \
     images="$(jq -r ".images[]" /usr/share/microshift/release/release-"$(uname -m)".json)" ; \
     mkdir -p "${IMAGE_STORAGE_DIR}" ; \
     for img in ${images} ; do \

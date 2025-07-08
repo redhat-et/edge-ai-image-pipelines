@@ -19,6 +19,6 @@ jobs:
     needs: build-triton-us
     with:
       config-file: ./tegra/config.toml
-      src-reference: ${{ needs.build-tensorrt.outputs.dest-reference }}
+      src-reference: ${{ needs.build-triton-us.outputs.dest-reference }}
 
 

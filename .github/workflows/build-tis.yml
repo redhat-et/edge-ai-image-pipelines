@@ -2,6 +2,9 @@ name: Build Inference Server on RHEL Bootc Nvidia Tegra
 on:
   workflow_dispatch:
   workflow_call:
+  push:
+    branches:
+      - main
 jobs:
   build-tensorrt:
     uses: ./.github/workflows/build-rhel-bootc-image.yml

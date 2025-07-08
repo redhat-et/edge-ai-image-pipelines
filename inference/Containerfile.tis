@@ -4,18 +4,15 @@ FROM ${BASE_IMAGE}
 
 ARG PLAN_ARTIFACT
 
-COPY auth.json auth.json
-
-RUN <<SETUP
+RUN --mount=type=secret,id=podman-auth,dst=auth.json <<SETUP
 set -x
-
-cp auth.json $XDG_RUNTIME_DIR/auth.json
 
 mkdir -p models/model/1
 
 mkdir -p dst
-skopeo copy docker://${PLAN_ARTIFACT} dir:dst
+skopeo copy --authfile auth.json docker://${PLAN_ARTIFACT} dir:dst
 sha=$(jq '.layers[0].digest' dst/manifest.json | cut -d : -f 2)
 sha=${sha::-1}
 mv dst/${sha} models/model/1/model.plan
+rm -r dst
 SETUP
