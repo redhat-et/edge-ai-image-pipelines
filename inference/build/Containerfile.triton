@@ -1,0 +1,18 @@
+ARG BASE_IMAGE
+
+FROM ${BASE_IMAGE}
+
+ARG PLAN_ARTIFACT
+
+RUN --mount=type=secret,id=podman-auth,dst=auth.json <<SETUP
+set -x
+
+mkdir -p models/model/1
+
+mkdir -p dst
+skopeo copy --authfile auth.json docker://${PLAN_ARTIFACT} dir:dst
+sha=$(jq '.layers[0].digest' dst/manifest.json | cut -d : -f 2)
+sha=${sha::-1}
+mv dst/${sha} models/model/1/model.plan
+rm -r dst
+SETUP

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: triton-client
+spec:
+  containers:
+  - name: client
+    image: nvcr.io/nvidia/tritonserver:25.05-py3-igpu
+    command: ["/bin/sh", "-c", "sleep infinity"]
+    volumeMounts:
+    - mountPath: /share
+      name: share
+  volumes:
+  - name: share
+    hostPath:
+      path: /home/admin
+      type: DirectoryOrCreate
