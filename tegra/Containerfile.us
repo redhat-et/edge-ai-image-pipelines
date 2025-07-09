@@ -77,9 +77,4 @@ RUN cat > /usr/lib/systemd/system/microshift.service.d/microshift-copy-images.co
 ExecStartPre=/usr/bin/microshift-copy-images
 EOF
 
-# Optionnal - Add RHEM agents for integration with Red Hat Edge Manager
-RUN dnf -y copr enable @redhat-et/flightctl && \
-    dnf -y install flightctl-agent && \
-    dnf -y clean all && \
-    systemctl enable flightctl-agent.service
 
