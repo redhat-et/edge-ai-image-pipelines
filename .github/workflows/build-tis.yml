@@ -56,6 +56,7 @@ jobs:
       dest-host: ${{ vars.DEST_REGISTRY_HOST }}
       dest-image: ${{ vars.DEST_REGISTRY_REPO }}
       tag-list: "triton-inference-server"
+      extra-args: --secret id=podman-auth,src=/run/containers/0/auth.json 
       build-args: |
         BASE_IMAGE=${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:triton-inference-server-intermediate
         PLAN_ARTIFACT=${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:model-plan

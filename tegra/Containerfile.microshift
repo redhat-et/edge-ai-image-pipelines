@@ -1,6 +1,8 @@
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE}
 
+ARG RESOURCE_DEFINITIONS
+
 ENV IMAGE_STORAGE_DIR=/usr/lib/containers/storage
 ENV IMAGE_LIST_FILE=${IMAGE_STORAGE_DIR}/image-list.txt
 
@@ -37,6 +39,7 @@ ExecStart=/usr/bin/mount --make-rshared /
 WantedBy=multi-user.target
 EOF
 RUN systemctl enable microshift-make-rshared.service
+
 # Pull the container images into /usr/lib/containers/storage:
 # - Each image goes into a separate sub-directory
 # - Sub-directories are named after the image reference string SHA
@@ -77,4 +80,20 @@ RUN cat > /usr/lib/systemd/system/microshift.service.d/microshift-copy-images.co
 ExecStartPre=/usr/bin/microshift-copy-images
 EOF
 
+# Make MicroShift client config the default client config for oc and kubectl
+RUN <<EOF 
+mkdir -p /root/.kube
+cp /var/lib/microshift/resources/kubeadmin/kubeconfig /root/.kube/config
+EOF
 
+# Create CRI-O configurations 
+RUN nvidia-ctk runtime configure --runtime=crio --set-as-default --config=/etc/crio/crio.conf.d/99-nvidia.conf
+
+# Create GPU support Daemonset
+RUN oc create -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.17.1/deployments/static/nvidia-device-plugin.yml
+
+RUN <<EOF
+for rsrc in ${RESOURCE_DEFINITIONS} ; do
+	oc apply -f rsrc
+done
+EOF

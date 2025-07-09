@@ -2,23 +2,27 @@ name: Build MicroShift Inference Server on RHEL Bootc Nvidia Tegra
 on:
   workflow_dispatch:
 jobs:
-  build-triton-us:
+  build-triton-microshift:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
     secrets: inherit
     with:
-      containerfile: tegra/Containerfile.us
+      containerfile: tegra/Containerfile.microshift
       dest-host: ${{ vars.DEST_REGISTRY_HOST }}
       dest-image: ${{ vars.DEST_REGISTRY_REPO }}
-      tag-list: "triton-us"
+      tag-list: "triton-microshift"
+      extra-args: |
+        --secret id=openshift-pull-secret,src=openshift-pull-secret.json
+        --volume ./inference/microshift:/share
       build-args: |
         BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:triton-inference-server
+        RESOURCE_DEFINITIONS=/share/triton.yml
 
-  build-tensorrt-raw:
+  build-triton-microshift-raw:
     uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
     secrets: inherit
     needs: build-triton-us
     with:
       config-file: ./tegra/config.toml
-      src-reference: ${{ needs.build-triton-us.outputs.dest-reference }}
+      src-reference: ${{ needs.build-triton-microshift.outputs.dest-reference }}
 
 

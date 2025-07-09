@@ -1,0 +1,7 @@
+on:
+  workflow_dispatch:
+jobs:
+  test-triton-microshift:
+    uses: ./.github/workflows/run-jumpstarter-workflow.yml
+    with:
+      jumpstarter-selector: name=majalop

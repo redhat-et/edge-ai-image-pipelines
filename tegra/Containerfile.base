@@ -41,6 +41,11 @@ RUN cat <<CFG > /etc/sudoers.d/wheel-nopasswd
 %wheel ALL=(ALL) NOPASSWD: ALL
 CFG
 
+RUN cat <<EOF >> /etc/ssh/sshd_config
+PermitRootLogin yes
+echo "root:passwd" | chpasswd
+EOF
+
 RUN cat <<EOF > /etc/modules-load.d/i2c-dev.conf
 i2c-dev
 EOF
