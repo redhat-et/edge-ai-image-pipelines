@@ -25,4 +25,12 @@ jobs:
       config-file: ./tegra/config.toml
       src-reference: ${{ needs.build-triton-microshift.outputs.dest-reference }}
 
+  test-triton-microshift:
+    uses: ./.github/workflows/run-jumpstarter-workflow.yml
+    secrets: inherit
+    needs: build-triton-microshift-raw
+    with:
+      jumpstarter-selector: name=majopela-orin-nx
+      workflow-cmd: python3 inference/tests/jmp-test-triton-microshift.py
+      image-url: ${{ needs.build-triton-microshift-raw.outputs.dest-reference }}
 

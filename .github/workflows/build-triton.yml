@@ -34,7 +34,7 @@ jobs:
           ${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:model-onnx \
           ${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:model-plan
 
-  build-intermediate-tis:
+  build-intermediate-triton:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
     secrets: inherit
     with:
@@ -46,8 +46,8 @@ jobs:
         BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
         APP_IMAGES=nvcr.io/nvidia/tritonserver:25.05-py3-igpu
 
-  build-tegra-tis:
-    needs: [build-engine, build-intermediate-tis]
+  build-tegra-triton:
+    needs: [build-engine, build-intermediate-triton]
     uses: ./.github/workflows/build-rhel-bootc-image.yml
     secrets: inherit
     with:
@@ -60,19 +60,19 @@ jobs:
         BASE_IMAGE=${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:triton-inference-server-intermediate
         PLAN_ARTIFACT=${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:model-plan
 
-  build-tis-raw:
+  build-triton-raw:
     uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
     secrets: inherit
-    needs: build-tegra-tis
+    needs: build-tegra-triton
     with:
       config-file: ./tegra/config.toml
-      src-reference: ${{ needs.build-tegra-tis.outputs.dest-reference }}
+      src-reference: ${{ needs.build-tegra-triton.outputs.dest-reference }}
 
-  test-tis:
+  test-triton:
     uses: ./.github/workflows/run-jumpstarter-workflow.yml
     secrets: inherit
-    needs: build-tis-raw
+    needs: build-triton-raw
     with:
       jumpstarter-selector: ${{ vars.JUMPSTARTER_SELECTOR }}
-      image-url: ${{ needs.build-tis-raw.outputs.dest-reference }}
-      workflow-cmd: python3 inference/tests/jmp-test-tis.py
+      image-url: ${{ needs.build-triton-raw.outputs.dest-reference }}
+      workflow-cmd: python3 inference/tests/jmp-test-triton.py
