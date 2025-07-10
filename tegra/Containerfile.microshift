@@ -81,7 +81,13 @@ ExecStartPre=/usr/bin/microshift-copy-images
 EOF
 
 # Make MicroShift client config the default client config for oc and kubectl
-ENV KUBECONFIG=/var/lib/microshift/resources/kubeadmin/kubeconfig
+RUN <<EOF 
+mkdir -p /root/.kube
+mkdir -p /home/admin/.kube
+
+ln -s /var/lib/microshift/resources/kubeadmin/kubeconfig /root/.kube/config
+ln -s /var/lib/microshift/resources/kubeadmin/kubeconfig /home/admin/.kube/config
+EOF
 
 # Create CRI-O configurations 
 RUN nvidia-ctk runtime configure --runtime=crio --set-as-default --config=/etc/crio/crio.conf.d/99-nvidia.conf
@@ -89,20 +95,21 @@ RUN nvidia-ctk runtime configure --runtime=crio --set-as-default --config=/etc/c
 # Create Kustomizations and add GPU support Daemonset
 RUN <<EOF 
 mkdir -p /etc/microshift/manifests
-
 curl -L https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.17.1/deployments/static/nvidia-device-plugin.yml -o /etc/microshift/manifests/nivida-device-plugin.yml
+EOF
 
-touch /etc/microshift/manifests/kustomization.yml
-echo "resources:" >> /etc/microshift/manifests/kustomization.yml
-echo " - nvidia-device-plugin.yml" >> /etc/microshift/manifests/kustomization.yml
+RUN cat <<EOF > /etc/microshift/manifests/kustomization.yml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
 EOF
 
 RUN <<EOF
+echo " - nvidia-device-plugin.yml" >> /etc/microshift/manifests/kustomization.yml
 
 # Copy application resources
 for resource in ${RESOURCE_DEFINITIONS} ; do
 	cp $resource /etc/microshift/manifests
 	echo " - ${resource##*/}" >> /etc/microshift/manifests/kustomization.yml
 done
-
 EOF

@@ -37,7 +37,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: triton-service
+  name: server
 spec:
   selector:
     app: triton
