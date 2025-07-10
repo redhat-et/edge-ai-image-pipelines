@@ -81,41 +81,28 @@ ExecStartPre=/usr/bin/microshift-copy-images
 EOF
 
 # Make MicroShift client config the default client config for oc and kubectl
-RUN cat <<EOF > /usr/bin/microshift-copy-kubeconfig
-#!/bin/bash
-mkdir -p /root/.kube
-cp /var/lib/microshift/resources/kubeadmin/kubeconfig /root/.kube/config
-EOF
-
-RUN <<EOF 
-chmod 755 /usr/bin/microshift-copy-kubeconfig 
-EOF
-
-RUN cat <<EOF > /etc/systemd/system/copy-kubeconfig.service
-[Unit]
-Description=Copy MicroShift Config
-After=microshift.service
-Requires=microshift.service
-
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/microshift-copy-kubeconfig
-
-[Install]
-WantedBy=multi-user.target
-
-EOF
-
-RUN systemctl enable copy-kubeconfig.service
+ENV KUBECONFIG=/var/lib/microshift/resources/kubeadmin/kubeconfig
 
 # Create CRI-O configurations 
 RUN nvidia-ctk runtime configure --runtime=crio --set-as-default --config=/etc/crio/crio.conf.d/99-nvidia.conf
 
-# Create GPU support Daemonset
-RUN oc create -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.17.1/deployments/static/nvidia-device-plugin.yml
+# Create Kustomizations and add GPU support Daemonset
+RUN <<EOF 
+mkdir -p /etc/microshift/manifests
+
+curl -L https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.17.1/deployments/static/nvidia-device-plugin.yml -o /etc/microshift/manifests/nivida-device-plugin.yml
+
+touch /etc/microshift/manifests/kustomization.yml
+echo "resources:" >> /etc/microshift/manifests/kustomization.yml
+echo " - nvidia-device-plugin.yml" >> /etc/microshift/manifests/kustomization.yml
+EOF
 
 RUN <<EOF
-for rsrc in ${RESOURCE_DEFINITIONS} ; do
-	oc apply -f rsrc
+
+# Copy application resources
+for resource in ${RESOURCE_DEFINITIONS} ; do
+	cp $resource /etc/microshift/manifests
+	echo " - ${resource##*/}" >> /etc/microshift/manifests/kustomization.yml
 done
+
 EOF

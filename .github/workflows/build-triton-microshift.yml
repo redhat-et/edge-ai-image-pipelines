@@ -12,10 +12,10 @@ jobs:
       tag-list: "triton-microshift"
       extra-args: |
         --secret id=openshift-pull-secret,src=openshift-pull-secret.json
-        --volume /__w/edge-pipelines-for-model-validation/edge-pipelines-for-model-validation/inference/microshift:/share
+        --volume /__w/${{ github.event.repository.name }}/${{ github.event.repository.name }}:/repo
       build-args: |
         BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:triton-inference-server
-        RESOURCE_DEFINITIONS=/share/triton.yml
+        RESOURCE_DEFINITIONS=/repo/inference/microshift/triton.yml
 
   build-triton-microshift-raw:
     uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
