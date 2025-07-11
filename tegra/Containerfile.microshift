@@ -44,7 +44,7 @@ RUN systemctl enable microshift-make-rshared.service
 RUN --mount=type=secret,id=openshift-pull-secret,dst=/run/secrets/pull-secret.json <<EOF
 images="$(jq -r ".images[]" /usr/share/microshift/release/release-"$(uname -m)".json)" ; 
 for img in ${images} ; do 
-	/opt/physically-bound-images/embed-image.sh $img "--authfile /run/secrets/pull-secret.json --multi-arch=all"
+	/opt/physically-bound-images/embed_image.sh $img "--authfile /run/secrets/pull-secret.json --multi-arch=all"
 done
 EOF
 

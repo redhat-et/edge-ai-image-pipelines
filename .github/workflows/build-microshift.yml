@@ -31,6 +31,7 @@ jobs:
         --volume /__w/${{ github.event.repository.name }}/${{ github.event.repository.name }}:/repo
       build-args: |
         BASE_IMAGE=${{ needs.build-podman.outputs.dest-reference }}
+        RESOURCE_DEFINITIONS=
 
   build-raw:
     uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
@@ -39,3 +40,12 @@ jobs:
     with:
       config-file: ./tegra/config.toml
       src-reference: ${{ needs.build-microshift.outputs.dest-reference }}
+
+  flash-image:
+    uses: ./.github/workflows/run-jumpstarter-workflow.yml
+    secrets: inherit
+    needs: build-raw
+    with:
+      workflow-cmd: echo hello
+      image-url: ${{ needs.build-raw.outputs.dest-reference }}
+      jumpstarter-selector: name=majopela-orin-nx
