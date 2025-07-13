@@ -29,6 +29,7 @@ with env() as client:
         user=USERNAME,
         connect_kwargs={"password": PASSWORD},
     ) as ssh:
+        ssh.sudo("chown -R admin:admin /var/home/admin")
         ssh.put("inference/tests/triton-client.yml","triton-client.yml")
         ssh.put("inference/tests/triton-client.sh","triton-client.sh")
         ssh.put("inference/tests/triton-client.py","triton-client.py")

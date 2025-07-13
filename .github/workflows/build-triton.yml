@@ -46,7 +46,7 @@ jobs:
         BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
         APP_IMAGES=nvcr.io/nvidia/tritonserver:25.05-py3-igpu
 
-  build-tegra-triton:
+  build-triton:
     needs: [build-engine, build-intermediate-triton]
     uses: ./.github/workflows/build-rhel-bootc-image.yml
     secrets: inherit
@@ -63,10 +63,10 @@ jobs:
   build-triton-raw:
     uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
     secrets: inherit
-    needs: build-tegra-triton
+    needs: build-triton
     with:
       config-file: ./tegra/config.toml
-      src-reference: ${{ needs.build-tegra-triton.outputs.dest-reference }}
+      src-reference: ${{ needs.build-triton.outputs.dest-reference }}
 
   test-triton:
     uses: ./.github/workflows/run-jumpstarter-workflow.yml
@@ -76,3 +76,37 @@ jobs:
       jumpstarter-selector: ${{ vars.JUMPSTARTER_SELECTOR }}
       image-url: ${{ needs.build-triton-raw.outputs.dest-reference }}
       workflow-cmd: python3 inference/tests/jmp-test-triton.py
+
+  build-microshift:
+    uses: ./.github/workflows/build-rhel-bootc-image.yml
+    secrets: inherit
+    needs: build-triton
+    with:
+      containerfile: tegra/Containerfile.microshift
+      dest-host: ${{ vars.DEST_REGISTRY_HOST }}
+      dest-image: ${{ vars.DEST_REGISTRY_REPO }}
+      tag-list: "triton-microshift"
+      extra-args: |
+        --secret id=openshift-pull-secret,src=openshift-pull-secret.json
+        --volume /__w/${{ github.event.repository.name }}/${{ github.event.repository.name }}:/repo
+      build-args: |
+        BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:triton-inference-server
+        RESOURCE_DEFINITIONS=/repo/inference/microshift/triton.yml
+
+  build-microshift-raw:
+    uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
+    secrets: inherit
+    needs: build-microshift
+    with:
+      config-file: ./tegra/config.toml
+      src-reference: ${{ needs.build-microshift.outputs.dest-reference }}
+
+  test-microshift:
+    uses: ./.github/workflows/run-jumpstarter-workflow.yml
+    secrets: inherit
+    needs: [build-microshift-raw, test-triton]
+    with:
+      jumpstarter-selector: ${{ vars.JUMPSTARTER_SELECTOR }}
+      workflow-cmd: python3 inference/tests/jmp-test-triton-microshift.py
+      image-url: ${{ needs.build-microshift-raw.outputs.dest-reference }}
+

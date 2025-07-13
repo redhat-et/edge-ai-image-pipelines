@@ -60,6 +60,7 @@ EOF
 RUN <<EOF 
 mkdir -p /var/roothome/.kube
 mkdir -p /var/home/admin/.kube
+
 chown -R admin:admin /var/home/admin
 
 ln -s /var/lib/microshift/resources/kubeadmin/kubeconfig /var/roothome/.kube/config
