@@ -69,10 +69,10 @@ RUN <<EOF
 mkdir -p /var/roothome/.kube
 mkdir -p /var/home/admin/.kube
 
-chown -R admin:admin /var/home/admin
-
 ln -s /var/lib/microshift/resources/kubeadmin/kubeconfig /var/roothome/.kube/config
 ln -s /var/lib/microshift/resources/kubeadmin/kubeconfig /var/home/admin/.kube/config
+
+chown -R admin:admin /var/home/admin
 EOF
 
 # Create CRI-O configurations 
@@ -81,7 +81,7 @@ RUN nvidia-ctk runtime configure --runtime=crio --set-as-default --config=/etc/c
 # Create Kustomizations and add GPU support Daemonset
 RUN <<EOF 
 mkdir -p /etc/microshift/manifests
-curl -L https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.17.1/deployments/static/nvidia-device-plugin.yml -o /etc/microshift/manifests/nivida-device-plugin.yml
+curl -L https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.17.1/deployments/static/nvidia-device-plugin.yml -o /etc/microshift/manifests/nvidia-device-plugin.yml
 EOF
 
 RUN cat <<EOF > /etc/microshift/manifests/kustomization.yml
