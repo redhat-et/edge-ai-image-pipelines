@@ -1,0 +1,19 @@
+name: Test Inference Server on RHEL Bootc Nvidia Tegra
+on:
+  workflow_dispatch:
+jobs:
+  test-triton:
+    uses: ./.github/workflows/run-jumpstarter-workflow.yml
+    secrets: inherit
+    with:
+      jumpstarter-selector: name=nvidia-jetson-nx-orin-01-khw-eng-bos2-beaker
+      image-url: quay.io/redhat-et/rhel-bootc-tegra:triton-inference-server-raw
+      workflow-cmd: python3 inference/tests/jmp-test-triton.py
+
+  test-microshift:
+    uses: ./.github/workflows/run-jumpstarter-workflow.yml
+    secrets: inherit
+    with:
+      jumpstarter-selector: name=majopela-orin-nx
+      workflow-cmd: python3 inference/tests/jmp-test-triton-microshift.py
+      image-url: quay.io/redhat-et/rhel-bootc-tegra:triton-microshift-raw
