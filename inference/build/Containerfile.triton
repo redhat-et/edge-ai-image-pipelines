@@ -1,3 +1,10 @@
+# Builds the Triton Inference Server container
+# 
+# args:
+# 	BASE_IMAGE: reference RHEL Bootc image that has been embedded with the Triton Inference Server 
+# 		container
+#	PLAN_ARTIFACT: reference to the .plan OCI artifact to serve as a model with Triton Inference Server
+
 ARG BASE_IMAGE
 
 FROM ${BASE_IMAGE}
