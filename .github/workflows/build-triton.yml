@@ -69,7 +69,7 @@ jobs:
         --secret id=openshift-pull-secret,src=openshift-pull-secret.json
         --volume /__w/${{ github.event.repository.name }}/${{ github.event.repository.name }}:/repo
       build-args: |
-        BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:triton-inference-server
+        BASE_IMAGE=${{ needs.build-triton.outputs.dest-reference }}
         RESOURCE_DEFINITIONS=/repo/inference/microshift/triton.yml
 
   build-microshift-raw:

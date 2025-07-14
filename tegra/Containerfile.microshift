@@ -67,12 +67,7 @@ EOF
 # Make MicroShift client config the default client config for oc and kubectl
 RUN <<EOF 
 mkdir -p /var/roothome/.kube
-mkdir -p /var/home/admin/.kube
-
 ln -s /var/lib/microshift/resources/kubeadmin/kubeconfig /var/roothome/.kube/config
-ln -s /var/lib/microshift/resources/kubeadmin/kubeconfig /var/home/admin/.kube/config
-
-chown -R admin:admin /var/home/admin
 EOF
 
 # Create CRI-O configurations 
