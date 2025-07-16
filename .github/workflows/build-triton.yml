@@ -10,8 +10,8 @@ jobs:
       image-url: quay.io/redhat-et/rhel-bootc-tegra:tensorrt-raw
       workflow-cmd: |
         bash inference/build/jmp-build-engine.sh \
-          ${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:model-onnx \
-          ${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:model-plan
+          ${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:onnx-repostiory \
+          ${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:plan-repository
 
   build-intermediate-triton:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
@@ -37,7 +37,7 @@ jobs:
       extra-args: --secret id=podman-auth,src=/run/containers/0/auth.json 
       build-args: |
         BASE_IMAGE=${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:triton-inference-server-intermediate
-        PLAN_ARTIFACT=${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:model-plan
+        PLAN_REPOSITORY=${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:plan-repository
 
   build-triton-raw:
     uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
