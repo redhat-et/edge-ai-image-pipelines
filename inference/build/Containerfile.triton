@@ -1,18 +1,27 @@
+# Builds the Triton Inference Server container
+# 
+# args:
+# 	BASE_IMAGE: reference RHEL Bootc image that has been embedded with the Triton Inference Server 
+# 		container
+#	PLAN_REPOSITORY: Reference to Podman Artifact containing the model repository of plan files you'd like
+#       to run with Triton Inference Server
+
 ARG BASE_IMAGE
 
 FROM ${BASE_IMAGE}
 
-ARG PLAN_ARTIFACT
+ARG PLAN_REPOSITORY
 
 RUN --mount=type=secret,id=podman-auth,dst=auth.json <<SETUP
 set -x
-
-mkdir -p models/model/1
 
 mkdir -p dst
 skopeo copy --authfile auth.json docker://${PLAN_ARTIFACT} dir:dst
 sha=$(jq '.layers[0].digest' dst/manifest.json | cut -d : -f 2)
 sha=${sha::-1}
-mv dst/${sha} models/model/1/model.plan
+mv dst/${sha} models.tar.xz
+xz -d models.tar.xz
+tar xf models.tar
+mv models /models
 rm -r dst
 SETUP

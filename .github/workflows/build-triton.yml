@@ -2,37 +2,16 @@ name: Build Inference Server on RHEL Bootc Nvidia Tegra
 on:
   workflow_dispatch:
 jobs:
-  build-tensorrt:
-    uses: ./.github/workflows/build-rhel-bootc-image.yml
-    secrets: inherit
-    with:
-      containerfile: tegra/Containerfile.podman
-      dest-host: ${{ vars.DEST_REGISTRY_HOST }}
-      dest-image: ${{ vars.DEST_REGISTRY_REPO }}
-      tag-list: "tensorrt"
-      build-args: |
-        BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
-        APP_IMAGES=nvcr.io/nvidia/tensorrt:25.05-py3-igpu
-
-  build-tensorrt-raw:
-    uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
-    secrets: inherit
-    needs: build-tensorrt
-    with:
-      config-file: ./tegra/config.toml
-      src-reference: ${{ needs.build-tensorrt.outputs.dest-reference }}
-
   build-engine:
     uses: ./.github/workflows/run-jumpstarter-workflow.yml
     secrets: inherit
-    needs: build-tensorrt-raw
     with:
       jumpstarter-selector: ${{ vars.JUMPSTARTER_SELECTOR }}
-      image-url: ${{ needs.build-tensorrt-raw.outputs.dest-reference }}
+      image-url: quay.io/redhat-et/rhel-bootc-tegra:tensorrt-raw
       workflow-cmd: |
         bash inference/build/jmp-build-engine.sh \
-          ${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:model-onnx \
-          ${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:model-plan
+          ${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:onnx-repostiory \
+          ${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:plan-repository
 
   build-intermediate-triton:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
@@ -58,7 +37,7 @@ jobs:
       extra-args: --secret id=podman-auth,src=/run/containers/0/auth.json 
       build-args: |
         BASE_IMAGE=${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:triton-inference-server-intermediate
-        PLAN_ARTIFACT=${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:model-plan
+        PLAN_REPOSITORY=${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:plan-repository
 
   build-triton-raw:
     uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
@@ -90,7 +69,7 @@ jobs:
         --secret id=openshift-pull-secret,src=openshift-pull-secret.json
         --volume /__w/${{ github.event.repository.name }}/${{ github.event.repository.name }}:/repo
       build-args: |
-        BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:triton-inference-server
+        BASE_IMAGE=${{ needs.build-triton.outputs.dest-reference }}
         RESOURCE_DEFINITIONS=/repo/inference/microshift/triton.yml
 
   build-microshift-raw:

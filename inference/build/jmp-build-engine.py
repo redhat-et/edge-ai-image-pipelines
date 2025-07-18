@@ -29,10 +29,22 @@ with env() as client:
         user=USERNAME,
         connect_kwargs={"password": PASSWORD},
     ) as ssh:
-        ssh.put("model.onnx","model.onnx")
+        ssh.put("onnx-repository.tar.xz","onnx-repository.tar.xz")
+        ssh.sudo("xz -d onnx-repository.tar.xz")
+        ssh.sudo("tar xf onnx-repository.tar")
+        ssh.sudo("find onnx-repository -type d -exec mkdir -p plan-repository{} \;")
         ssh.sudo(
-            "podman run --name trtexec -i --rm --device nvidia.com/gpu=all -v .:/share --replace nvcr.io/nvidia/tensorrt:25.05-py3-igpu trtexec --onnx=/share/model.onnx --saveEngine=/share/model.plan"
+            """
+            find onnx-repository -name *.onnx -exec \
+                podman run --rm -it --device nvidia.com/gpu=all \
+                    -v onnx-repository:/onnx-repository \
+                    -v plan-repository:/plan-repository \
+                    nvcr.io/nvidia/tensorrt:25.05-py3-igpu \
+                        trtexec --onnx=/{} --saveEngine=/{} \
+            \;
+            """
         )
-        ssh.get("model.plan","model.plan")
-
+        ssh.sudo("tar cf plan-repository.tar plan-repository")
+        ssh.sudo("xz plan-repository.tar")
+        ssh.get("plan-repository.tar.xz","plan-repository.tar.xz")
     client.power.off()

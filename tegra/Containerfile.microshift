@@ -1,3 +1,11 @@
+# Adds MicroShift to a Bootc Tegra image
+# 
+# Args:
+#	BASE_IMAGE: OCI reference to base Bootc image. Image should already contain application containers
+#	RESOURCE_DEFINITIONS: a whitespace-delimited list of kubernetes resource definitions, including
+#		applications, that should be appended to the kustomizations. The github repository will be mounted at
+#		/repo, so paths to any resources in the github repository should be given relative to that.
+
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE}
 
@@ -59,12 +67,7 @@ EOF
 # Make MicroShift client config the default client config for oc and kubectl
 RUN <<EOF 
 mkdir -p /var/roothome/.kube
-mkdir -p /var/home/admin/.kube
-
-chown -R admin:admin /var/home/admin
-
 ln -s /var/lib/microshift/resources/kubeadmin/kubeconfig /var/roothome/.kube/config
-ln -s /var/lib/microshift/resources/kubeadmin/kubeconfig /var/home/admin/.kube/config
 EOF
 
 # Create CRI-O configurations 
@@ -73,7 +76,7 @@ RUN nvidia-ctk runtime configure --runtime=crio --set-as-default --config=/etc/c
 # Create Kustomizations and add GPU support Daemonset
 RUN <<EOF 
 mkdir -p /etc/microshift/manifests
-curl -L https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.17.1/deployments/static/nvidia-device-plugin.yml -o /etc/microshift/manifests/nivida-device-plugin.yml
+curl -L https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.17.1/deployments/static/nvidia-device-plugin.yml -o /etc/microshift/manifests/nvidia-device-plugin.yml
 EOF
 
 RUN cat <<EOF > /etc/microshift/manifests/kustomization.yml
