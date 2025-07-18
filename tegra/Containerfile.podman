@@ -1,3 +1,14 @@
+# Adds Podman images to a RHEL Bootc image
+#
+# This must be done in a bit of a roundabout way because we can't run overlayfs on top of overlayfs
+# (which would be done by default if we wanted to `podman pull` these images). We could configure `podman pull`
+# to use the vfs driver, but this would use and insane size_of_entire_image * number_of_layers of disk storage
+#
+# Args:
+#   BASE_IMAGE: Reference to a RHEL Bootc image (usually the one built by tegra/Containerfile.base)
+#   APP_IMAGES: Whitespace-delimited list of podman container images to add to this image
+#   DAT_IMAGES: Whitespace-delimited list of podman artifact images to add to this image
+
 ARG BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
 FROM ${BASE_IMAGE}
 

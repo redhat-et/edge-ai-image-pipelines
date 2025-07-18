@@ -4,7 +4,7 @@
 #	BASE_IMAGE: OCI reference to base Bootc image. Image should already contain application containers
 #	RESOURCE_DEFINITIONS: a whitespace-delimited list of kubernetes resource definitions, including
 #		applications, that should be appended to the kustomizations. The github repository will be mounted at
-#		/repo, so paths to any resources in the github repository should be given relative to that.
+#		/repo, so paths to any resources in the github repository should be given relative to that path
 
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE}
