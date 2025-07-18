@@ -6,12 +6,16 @@
 
 ARG BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
 FROM ${BASE_IMAGE}
+# Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 ARG HF_REPOS
+# Download Hugging Face models using huggingface-cli
 RUN <<DOWNLOAD
+# Create a temporary home directory for uvx
 TMP_HOME=$(mktemp -d)
 for REPO in ${HF_REPOS}; do
+  # Download each model into /usr/share/huggingface/<repo>
   HOME=${TMP_HOME} uvx --no-cache --from "huggingface_hub[cli]" huggingface-cli download \
     ${REPO} --local-dir /usr/share/huggingface/${REPO}
 done

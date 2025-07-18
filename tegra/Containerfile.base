@@ -1,7 +1,10 @@
-# Builds a basic RHEL Bootc image for NVIDIA Tegra with Nvidia CDI enabled
+# Builds a basic RHEL Bootc image for NVIDIA Tegra SOC with Nvidia CDI enabled
 
+# The packages from NVIDIA's repo are only built for specific versions of RHEL, be sure to pin the exact tag
 FROM registry.redhat.io/rhel9/rhel-bootc:9.4-1730828483
 
+# Install NVIDIA container toolkit and L4T repositories, then install necessary packages
+# netavark is required for podman network to work
 RUN curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo | \
     sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo && \
     curl -s -L https://repo.download.nvidia.com/jetson/rhel-9.4/jp6.1/nvidia-l4t.repo | \
@@ -13,6 +16,7 @@ RUN curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-co
       nvidia-container-toolkit && \
     sudo dnf clean all
 
+# Create and enable a systemd service to generate the NVIDIA CDI YAML file
 RUN cat <<EOF > /etc/systemd/system/nvidia-cdi.service
 [Unit]
 Description=Generate the nvidia cdi yaml file
@@ -29,24 +33,40 @@ WantedBy=multi-user.target
 EOF
 RUN systemctl enable nvidia-cdi
 
+# Configure SSHD to allow GatewayPorts
+# this allows for forwarding a port on the device under test to the test runner
+# for prometheus to send metrics over remote write
 RUN cat <<EOF > /etc/ssh/sshd_config.d/51-custom.conf
 GatewayPorts clientspecified
 EOF
 
+# Modify bootc-generic-growpart service to remove virtualization condition
+# so that the root partition is expanded to fill the entire disk
 RUN sed -i '/ConditionVirtualization=vm/d' /usr/lib/systemd/system/bootc-generic-growpart.service
+# Configure Podman to use netavark as the network backend
 RUN sed -i 's/#network_backend = ""/network_backend = "netavark"/' /usr/share/containers/containers.conf
+# Change Podman socket permissions to 0666 (UNSAFE!)
+# allowing non-root users to run privileged containers
 RUN sed -i 's/SocketMode=0660/SocketMode=0666/' /usr/lib/systemd/system/podman.socket
+# Create a symlink for 'docker' to 'podman'
+# to provide compatibility with docker-compose
 RUN ln -sr /usr/bin/podman /usr/bin/docker
+# Enable the Podman socket
 RUN systemctl enable podman.socket
 
+# Configure sudoers to allow wheel group members to run commands without password
 RUN cat <<CFG > /etc/sudoers.d/wheel-nopasswd
 %wheel ALL=(ALL) NOPASSWD: ALL
 CFG
 
+# Load the i2c-dev kernel module at boot
+# for jetson_stats
 RUN cat <<EOF > /etc/modules-load.d/i2c-dev.conf
 i2c-dev
 EOF
 
+# Add kernel arguments for Jetson devices
+# disable selinux, and set the correct console device
 RUN cat <<EOF > /usr/lib/bootc/kargs.d/10-jetson.toml
 kargs = ["enforcing=0", "console=ttyTCU0,115200"]
 EOF

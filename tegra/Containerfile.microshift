@@ -14,13 +14,13 @@ ARG RESOURCE_DEFINITIONS
 ENV IMAGE_STORAGE_DIR=/usr/lib/containers/storage
 ENV IMAGE_LIST_FILE=${IMAGE_STORAGE_DIR}/image-list.txt
 
-# Prevent the kernel from being updated
+# Prevent the kernel from being updated (commented out as per original)
 # RUN echo "exclude=kernel* kmod-kvdo" >> /etc/yum.conf
 
 # Set microshift version to install
 ARG USHIFT_VER=4.18
 
-# Install microshift
+# Install MicroShift and its dependencies, then enable the MicroShift service
 RUN dnf config-manager \
         --set-enabled rhocp-${USHIFT_VER}-for-rhel-9-$(uname -m)-rpms \
         --set-enabled fast-datapath-for-rhel-9-$(uname -m)-rpms
@@ -28,7 +28,7 @@ RUN dnf install -y firewalld microshift microshift-release-info && \
     systemctl enable microshift && \
     dnf clean all
 
-# Mandatory firewall configuration for microshift
+# Mandatory firewall configuration for MicroShift
 RUN firewall-offline-cmd --zone=public --add-port=22/tcp && \
     firewall-offline-cmd --zone=trusted --add-source=10.42.0.0/16 && \
     firewall-offline-cmd --zone=trusted --add-source=169.254.169.1
@@ -56,8 +56,10 @@ for img in ${images} ; do
 done
 EOF
 
+# Create directory for MicroShift service overrides
 RUN mkdir -p /usr/lib/systemd/system/microshift.service.d
 
+# Configure MicroShift service to require and run after copy-embedded-images.service
 RUN cat <<EOF > /usr/lib/systemd/system/microshift.service.d/microshift-copy-images.conf
 [Unit]
 Requires=copy-embedded-images.service
@@ -70,25 +72,28 @@ mkdir -p /var/roothome/.kube
 ln -s /var/lib/microshift/resources/kubeadmin/kubeconfig /var/roothome/.kube/config
 EOF
 
-# Create CRI-O configurations 
+# Create CRI-O configurations for NVIDIA runtime
 RUN nvidia-ctk runtime configure --runtime=crio --set-as-default --config=/etc/crio/crio.conf.d/99-nvidia.conf
 
 # Create Kustomizations and add GPU support Daemonset
 RUN <<EOF 
 mkdir -p /etc/microshift/manifests
+# Download NVIDIA device plugin YAML
 curl -L https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.17.1/deployments/static/nvidia-device-plugin.yml -o /etc/microshift/manifests/nvidia-device-plugin.yml
 EOF
 
+# Initialize kustomization.yml
 RUN cat <<EOF > /etc/microshift/manifests/kustomization.yml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
 EOF
 
+# Add NVIDIA device plugin and application resources to kustomization.yml
 RUN <<EOF
 echo " - nvidia-device-plugin.yml" >> /etc/microshift/manifests/kustomization.yml
 
-# Copy application resources
+# Copy application resources and add them to kustomization.yml
 for resource in ${RESOURCE_DEFINITIONS} ; do
 	cp $resource /etc/microshift/manifests
 	echo " - ${resource##*/}" >> /etc/microshift/manifests/kustomization.yml

@@ -1,7 +1,10 @@
 FROM docker.io/rockylinux/rockylinux:9.4
+# Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 RUN dnf -y install git which && dnf clean all
 
+# Create a virtual environment and install jetson_stats_node_exporter
 RUN uv venv /app && VIRTUAL_ENV=/app uv pip install git+https://github.com/NickCao/jetson_stats_node_exporter
+# Entrypoint to run jetson_stats_node_exporter
 ENTRYPOINT /app/bin/python -m jetson_stats_node_exporter

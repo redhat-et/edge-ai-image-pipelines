@@ -12,16 +12,25 @@ FROM ${BASE_IMAGE}
 
 ARG PLAN_REPOSITORY
 
+# Set up and copy the model repository from the specified Podman Artifact
 RUN --mount=type=secret,id=podman-auth,dst=auth.json <<SETUP
 set -x
 
+# Create a destination directory for skopeo copy
 mkdir -p dst
+# Copy the plan artifact using skopeo and authentication file
 skopeo copy --authfile auth.json docker://${PLAN_ARTIFACT} dir:dst
+# Extract the SHA digest from the manifest.json
 sha=$(jq '.layers[0].digest' dst/manifest.json | cut -d : -f 2)
 sha=${sha::-1}
+# Rename the extracted content to models.tar.xz
 mv dst/${sha} models.tar.xz
+# Decompress the tarball
 xz -d models.tar.xz
+# Extract the models
 tar xf models.tar
+# Move the extracted models to the /models directory
 mv models /models
+# Clean up temporary directory
 rm -r dst
 SETUP

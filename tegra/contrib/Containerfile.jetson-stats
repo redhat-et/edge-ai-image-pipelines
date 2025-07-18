@@ -1,12 +1,17 @@
 FROM docker.io/rockylinux/rockylinux:9.4
+# Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
+# Install NVIDIA L4T repository and necessary packages for Jetson Stats
 RUN curl -s -L https://repo.download.nvidia.com/jetson/rhel-9.4/jp6.1/nvidia-l4t.repo | \
     tee /etc/yum.repos.d/nvidia-l4t.repo && \
     dnf -y install git which \
     nvidia-jetpack-tools nvidia-jetpack-nvpmodel nvidia-jetpack-nvfancontrol && \
     dnf clean all
+# Add jtop group
 RUN groupadd jtop
 
+# Create a virtual environment and install jetson_stats
 RUN uv venv /app && VIRTUAL_ENV=/app uv pip install git+https://github.com/rbonghi/jetson_stats
+# Entrypoint to remove existing jtop socket and start jtop service
 ENTRYPOINT rm -f /run/jtop.sock && JTOP_SERVICE=True /app/bin/jtop
