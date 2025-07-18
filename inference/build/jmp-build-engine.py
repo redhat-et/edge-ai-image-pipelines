@@ -29,10 +29,12 @@ with env() as client:
         user=USERNAME,
         connect_kwargs={"password": PASSWORD},
     ) as ssh:
+        print("fetching repoistory")
         ssh.put("onnx-repository.tar.xz","onnx-repository.tar.xz")
+        print("processing")
         ssh.sudo("xz -d onnx-repository.tar.xz")
         ssh.sudo("tar xf onnx-repository.tar")
-        ssh.sudo("find onnx-repository -type d -exec mkdir -p plan-repository{} \;")
+        ssh.sudo("find onnx-repository -type d -exec mkdir -p plan-repository{} \\;")
         ssh.sudo(
             """
             find onnx-repository -name *.onnx -exec \
@@ -41,10 +43,11 @@ with env() as client:
                     -v plan-repository:/plan-repository \
                     nvcr.io/nvidia/tensorrt:25.05-py3-igpu \
                         trtexec --onnx=/{} --saveEngine=/{} \
-            \;
+            \\;
             """
         )
         ssh.sudo("tar cf plan-repository.tar plan-repository")
         ssh.sudo("xz plan-repository.tar")
+        print("storing repository...")
         ssh.get("plan-repository.tar.xz","plan-repository.tar.xz")
     client.power.off()

@@ -10,7 +10,7 @@ jobs:
       image-url: quay.io/redhat-et/rhel-bootc-tegra:tensorrt-raw
       workflow-cmd: |
         bash inference/build/jmp-build-engine.sh \
-          ${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:onnx-repostiory \
+          ${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:onnx-repository \
           ${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:plan-repository
 
   build-intermediate-triton:
