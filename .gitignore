@@ -1,3 +1,5 @@
 *.onnx
 *.plan
 .aider*
+*.tar
+*.xz

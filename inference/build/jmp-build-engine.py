@@ -29,25 +29,22 @@ with env() as client:
         user=USERNAME,
         connect_kwargs={"password": PASSWORD},
     ) as ssh:
-        print("fetching repoistory")
         ssh.put("onnx-repository.tar.xz","onnx-repository.tar.xz")
-        print("processing")
-        ssh.sudo("xz -d onnx-repository.tar.xz")
+        ssh.sudo("xz -dfk onnx-repository.tar.xz")
         ssh.sudo("tar xf onnx-repository.tar")
-        ssh.sudo("find onnx-repository -type d -exec mkdir -p plan-repository{} \\;")
-        ssh.sudo(
-            """
-            find onnx-repository -name *.onnx -exec \
-                podman run --rm -it --device nvidia.com/gpu=all \
-                    -v onnx-repository:/onnx-repository \
-                    -v plan-repository:/plan-repository \
-                    nvcr.io/nvidia/tritonserver:25.05-py3-igpu \
-                        trtexec --onnx=/{} --saveEngine=/{} \
-            \\;
-            """
-        )
+        
+        for path in ssh.sudo("find onnx-repository -name model.onnx").stdout.split('\n'):
+            try:
+                subpath = path.split('/',1)[1].rsplit('.',1)[0]
+            except:
+                print(f"WARNING: could not parse path {path}, skipping")
+                continue
+
+            ssh.sudo(f"podman run --rm -it --device nvidia.com/gpu=all -v ./onnx-repository:/onnx-repository nvcr.io/nvidia/tritonserver:25.05-py3-igpu /usr/src/tensorrt/bin/trtexec --onnx=/onnx-repository/{subpath}.onnx --saveEngine=/onnx-repository/{subpath}.plan ")
+            ssh.sudo(f"rm -f {path}")
+
+        ssh.sudo("mv onnx-repository plan-repository")
         ssh.sudo("tar cf plan-repository.tar plan-repository")
         ssh.sudo("xz plan-repository.tar")
-        print("storing repository...")
         ssh.get("plan-repository.tar.xz","plan-repository.tar.xz")
     client.power.off()

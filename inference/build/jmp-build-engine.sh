@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eux -o pipefail
+# set -eux -o pipefail
 
 podman artifact pull $1
 podman artifact extract $1 onnx-repository.tar
