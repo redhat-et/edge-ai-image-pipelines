@@ -7,7 +7,7 @@ jobs:
     secrets: inherit
     with:
       jumpstarter-selector: ${{ vars.JUMPSTARTER_SELECTOR }}
-      image-url: quay.io/redhat-et/rhel-bootc-tegra:tensorrt-raw
+      image-url: quay.io/redhat-et/rhel-bootc-tegra:base-raw
       workflow-cmd: |
         bash inference/build/jmp-build-engine.sh \
           ${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:onnx-repository \

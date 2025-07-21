@@ -41,7 +41,7 @@ with env() as client:
                 podman run --rm -it --device nvidia.com/gpu=all \
                     -v onnx-repository:/onnx-repository \
                     -v plan-repository:/plan-repository \
-                    nvcr.io/nvidia/tensorrt:25.05-py3-igpu \
+                    nvcr.io/nvidia/tritonserver:25.05-py3-igpu \
                         trtexec --onnx=/{} --saveEngine=/{} \
             \\;
             """
