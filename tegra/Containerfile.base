@@ -72,5 +72,3 @@ EOF
 RUN cat <<EOF > /usr/lib/bootc/kargs.d/10-jetson.toml
 kargs = ["enforcing=0", "console=ttyTCU0,115200"]
 EOF
-
-RUN sudo dnf install pip

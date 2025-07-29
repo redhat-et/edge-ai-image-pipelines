@@ -71,16 +71,9 @@ jobs:
         HF_REPOS=ibm-granite/granite-vision-3.2-2b moondream/moondream-2b-2025-04-14
 
   build-tegra-triton:
-    uses: ./.github/workflows/build-rhel-bootc-image.yml
+    uses: ./.github/workflows/build-triton.yml
     secrets: inherit
     needs: build-tegra-base
-    with:
-      containerfile: tegra/Containerfile.podman
-      dest-image: "redhat-et/rhel-bootc-tegra"
-      tag-list: "triton"
-      build-args: |
-        BASE_IMAGE=${{ needs.build-tegra-base.outputs.dest-reference }}
-        APP_IMAGES=nvcr.io/nvidia/tritonserver:25.05-py3-igpu
 
   build-tegra-llm:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
@@ -109,3 +102,4 @@ jobs:
     with:
       config-file: ./tegra/config.toml
       src-reference: ${{ needs.build-tegra-llm.outputs.dest-reference }}
+
