@@ -14,7 +14,13 @@ jobs:
   get-base-reference:
     runs-on: ubuntu-latest
     outputs:
-      base-reference: ${{ steps.get.outputs.base-reference }}
+      base-reference: ${{ steps.get-base-reference.outputs.base-reference }}
     steps:
-      - id: get
-        run: echo "base-reference=${{ inputs.base-reference }}" >> "$GITHUB_OUTPUT"
+      - id: get-base-reference
+        run: |
+          BASE_REFERENCE="${{ inputs.base-reference }}"
+          if [ -z $BASE_REFERENCE ]; then
+            BASE_REFERENCE=${{ vars.DEST_REGISTRY_HOST }}/${{ vars.DEST_REGISTRY_REPO }}:base
+          fi
+          echo $BASE_REFERENCE
+          echo "base-reference=$BASE_REFERENCE" >> "$GITHUB_OUTPUT"

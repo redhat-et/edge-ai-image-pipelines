@@ -4,7 +4,7 @@ on:
     inputs:
       base-reference:
         type: string
-        required: true
+        required: false
   workflow_call:
     inputs:
       base-reference:
@@ -22,7 +22,7 @@ jobs:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
     secrets: inherit
     with:
-      containerfile: tegra/Containerfile.ollama
+      containerfile: ollama/Containerfile.ollama
       tag-list: "ollama-worker"
       dest-image: "redhat-et/rhel-bootc-tegra-artifacts"
       build-args: |
