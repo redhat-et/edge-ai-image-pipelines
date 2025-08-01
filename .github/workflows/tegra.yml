@@ -1,4 +1,4 @@
-name: Build RHEL bootc image for Nvidia Tegra
+name: (Old) Build RHEL bootc images for Nvidia Tegra
 on:
   workflow_dispatch:      
   push:

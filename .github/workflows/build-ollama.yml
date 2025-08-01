@@ -1,0 +1,36 @@
+name: "Build Ollama server image"
+on:
+  workflow_dispatch:
+  workflow_call:
+jobs:
+  build-ollama-container:
+    uses: ./.github/workflows/build-rhel-bootc-image.yml
+    secrets: inherit
+    with:
+      containerfile: tegra/Containerfile.ollama
+      tag-list: "ollama-worker"
+      dest-image: "redhat-et/rhel-bootc-tegra-artifacts"
+      build-args: |
+        BASE_IMAGE=fedora:42
+
+  build-ollama:
+    uses: ./.github/workflows/build-rhel-bootc-image.yml
+    secrets: inherit
+    needs: build-ollama-container
+    with:
+      containerfile: tegra/Containerfile.podman
+      dest-image: "redhat-et/rhel-bootc-tegra"
+      tag-list: "ollama"
+      # In this case, DAT_IMAGES lists models from a Quay model saddle
+      build-args: |
+        BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
+        APP_IMAGES=${{ needs.build-ollama.outputs.dest-reference }}
+        DAT_IMAGES=quay.io/ncao/modelsaddle-catalog:gemma3-4b quay.io/ncao/modelsaddle-catalog:gemma3-4b quay.io/ncao/modelsaddle-catalog:granite3.2-vision-2b
+
+  build-ollama-raw:
+    uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
+    secrets: inherit
+    needs: build-ollama
+    with:
+      config-file: ./tegra/config.toml
+      src-reference: ${{ needs.build-ollama-with-models.outputs.dest-reference }}

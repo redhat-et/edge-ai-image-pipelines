@@ -1,0 +1,15 @@
+name: "Build all Jetson Servers"
+on:
+  workflow_dispatch:
+jobs:
+  build-ollama:
+    uses: ./.github/workflows/build-ollama.yml
+    secrets: inherit
+
+  build-triton:
+    uses: ./.github/workflows/build-triton.yml
+    secrets: inherit
+
+  build-vllm:
+    uses: ./.github/workflows/build-vllm.yml
+    secrets: inherit

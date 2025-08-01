@@ -1,0 +1,10 @@
+# Installs ARM Ollama in a container
+
+ARG BASE_IMAGE
+
+FROM ${BASE_IMAGE}
+
+RUN <<EOF
+curl -L https://ollama.com/download/ollama-linux-arm64.tgz -o ollama-linux-arm64.tgz
+sudo tar -C /usr -xzf ollama-linux-arm64.tgz
+EOF

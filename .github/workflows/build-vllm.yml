@@ -1,0 +1,50 @@
+name: "Build vLLM Jetson server"
+on:
+  workflow_dispatch:
+  workflow_call:
+jobs:
+  build-vllm-container:
+    uses: ./.github/workflows/build-rhel-bootc-image.yml
+    secrets: inherit
+    with:
+      containerfile: tegra/Containerfile.vllm
+      dest-image: ${{ vars.ARTIFACTS_REGISTRY_HOST }}/${{ vars.ARTIFACTS_REGISTRY_REPO }}
+      tag-list: "vllm-worker"
+      build-args: |
+        BASE_IMAGE=registry.access.redhat.com/ubi9/ubi:9.6
+        TORCH_WHEEL_ARTIFACT=quay.io/ncao/wheels:torch
+        TORCH_LIB_ARTIFACT=quay.io/redhat-user-workloads/octo-edge-tenant/jetson-wheels-torch-lib@sha256:052c3fa3dd9d41b5f3ad44e85e165e234ec46f796210358ee42a5e25f6c36964
+        VLLM_WHEEL_ARTIFACT=quay.io/ncao/wheels:vllm
+
+  build-vllm-base:
+    uses: ./.github/workflows/build-rhel-bootc-image.yml
+    secrets: inherit
+    needs: build-vllm-container
+    with:
+      containerfile: tegra/Containerfile.podman
+      dest-image: "redhat-et/rhel-bootc-tegra"
+      tag-list: "vllm-base"
+      build-args: |
+        BASE_IMAGE=${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}
+        APP_IMAGES=${{ needs.build-vllm-container.outputs.dest-reference }}
+
+  build-vllm:
+    uses: ./.github/workflows/build-rhel-bootc-image.yml
+    secrets: inherit
+    needs: build-vllm-base
+    with:
+      containerfile: tegra/Containerfile.hf
+      dest-image: ${{ vars.DEST_REGISTRY_HOST }}/${{ vars.DEST_REGISTRY_REPO }}
+      tag-list: "vllm"
+      build-args: |
+        BASE_IMAGE=${{ needs.build-vllm-base.outputs.dest-reference }}
+        HF_REPOS=ibm-granite/granite-vision-3.2-2b moondream/moondream-2b-2025-04-14
+
+  build-vllm-raw:
+    uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
+    secrets: inherit
+    needs: build-vllm
+    with:
+      config-file: ./tegra/config.toml
+      src-reference: ${{ needs.build-vllm.outputs.dest-reference }}
+

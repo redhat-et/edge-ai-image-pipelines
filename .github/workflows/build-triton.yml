@@ -1,5 +1,6 @@
 name: Build Inference Server on RHEL Bootc Nvidia Tegra
 on:
+  workflow_dispatch:
   workflow_call:
 jobs:
   build-engine:
