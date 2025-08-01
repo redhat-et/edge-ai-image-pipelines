@@ -5,7 +5,6 @@ on:
       base-image:
         type: string
         required: false
-        default: ${{ vars.DEST_REGISTRY_HOST }}/${{ vars.DEST_REGISTRY_REPO }}:base
   workflow_call:
     inputs:
       base-image:

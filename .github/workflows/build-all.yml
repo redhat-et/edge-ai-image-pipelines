@@ -47,4 +47,4 @@ jobs:
     with:
       input-image: ${{ vars.DEST_REGISTRY_HOST }}/${{ vars.DEST_REGISTRY_REPO }}:triton
       tag-list: "triton-microshift"
-        resource-definitions: "/repo/triton/microshift/tegra.yml"
+      resource-definitions: "/repo/triton/microshift/tegra.yml"
