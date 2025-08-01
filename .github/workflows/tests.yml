@@ -1,12 +1,6 @@
 name: Test RHEL bootc image
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - "main"
-    paths:
-      - "tests/**"
-      - ".github/workflows/tests.yml"
 jobs:
   test-tegra-base-image:
     uses: ./.github/workflows/run-jumpstarter-workflow.yml

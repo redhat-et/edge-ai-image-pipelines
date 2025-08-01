@@ -8,7 +8,8 @@ jobs:
     secrets: inherit
     with:
       containerfile: tegra/Containerfile.vllm
-      dest-image: ${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}
+      dest-image: ${{ vars.ARTIFACT_REGISTRY_REPO }}
+      dest-host: ${{ vars.ARTIFACT_REGISTRY_HOST }}
       tag-list: "vllm-worker"
       build-args: |
         BASE_IMAGE=registry.access.redhat.com/ubi9/ubi:9.6
@@ -22,7 +23,8 @@ jobs:
     needs: build-vllm-container
     with:
       containerfile: tegra/Containerfile.podman
-      dest-image: "redhat-et/rhel-bootc-tegra"
+      dest-image: ${{ vars.ARTIFACT_REGISTRY_REPO }}
+      dest-host: ${{ vars.ARTIFACT_REGISTRY_HOST }}
       tag-list: "vllm-base"
       build-args: |
         BASE_IMAGE=${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}
@@ -34,7 +36,8 @@ jobs:
     needs: build-vllm-base
     with:
       containerfile: tegra/Containerfile.hf
-      dest-image: ${{ vars.DEST_REGISTRY_HOST }}/${{ vars.DEST_REGISTRY_REPO }}
+      dest-image: ${{ vars.DEST_REGISTRY_REPO }}
+      dest-host: ${{ vars.DEST_REGISTRY_HOST }}
       tag-list: "vllm"
       build-args: |
         BASE_IMAGE=${{ needs.build-vllm-base.outputs.dest-reference }}
