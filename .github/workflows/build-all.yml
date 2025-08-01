@@ -12,7 +12,7 @@ jobs:
       tag-list: "base"    
 
   build-base-raw:
-    uses: ./.github/workflow/build-rhel-bootc-raw-image.yml
+    uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
     secrets: inherit
     needs: build-base
     with:
@@ -24,21 +24,21 @@ jobs:
     secrets: inherit
     needs: build-base
     with:
-      base-image: ${{ needs.build-base.outputs.dest-reference }}
+      base-reference: ${{ needs.build-base.outputs.dest-reference }}
 
   build-vllm:
     uses: ./.github/workflows/build-vllm.yml
     secrets: inherit
     needs: build-base
     with:
-      base-image: ${{ needs.build-base.outputs.dest-reference }}
+      base-reference: ${{ needs.build-base.outputs.dest-reference }}
 
   build-triton:
     uses: ./.github/workflows/build-triton.yml
     secrets: inherit
     needs: build-base
     with:
-      base-image: ${{ needs.build-base.outputs.dest-reference }}
+      base-reference: ${{ needs.build-base.outputs.dest-reference }}
 
   build-triton-microshift:
     uses: ./.github/workflows/build-microshift.yml

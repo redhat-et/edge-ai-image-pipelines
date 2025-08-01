@@ -1,0 +1,20 @@
+# workaround because GitHub actions doesn't allow us to access vars context in on.workflow_dispatch.inputs.<id>.default
+on:
+  workflow_call:
+    inputs:
+      base-reference:
+        required: false
+        type: string
+        default: ${{ vars.DEST_REGISTRY_HOST }}/${{ vars.DEST_REGISTRY_REPO }}:base
+    outputs: 
+      base-reference: 
+        value: ${{ jobs.get-base-reference.outputs.base-reference }}
+
+jobs:
+  get-base-reference:
+    runs-on: ubuntu-latest
+    outputs:
+      base-reference: ${{ steps.get.outputs.base-reference }}
+    steps:
+      - id: get
+        run: echo "base-reference=${{ inputs.base-reference }}" >> "$GITHUB_OUTPUT"

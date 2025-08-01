@@ -2,17 +2,22 @@ name: "Build vLLM Jetson server"
 on:
   workflow_dispatch:
     inputs:
-      base-image:
+      base-reference:
         type: string
         required: false
-        default: ${{ vars.DEST_REGISTRY_HOST }}/${{ vars.DEST_REGISTRY_REPO }}:base
   workflow_call:
     inputs:
-      base-image:
+      base-reference:
         type: string
         required: false
-        default: ${{ vars.DEST_REGISTRY_HOST }}/${{ vars.DEST_REGISTRY_REPO }}:base
-obs:
+
+jobs:
+  base-reference:
+    uses: ./.github/workflows/get-base-reference.yml
+    secrets: inherit
+    with:
+      base-reference: ${{ inputs.base-reference }}
+
   build-vllm-container:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
     secrets: inherit
@@ -30,14 +35,14 @@ obs:
   build-vllm-base:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
     secrets: inherit
-    needs: build-vllm-container
+    needs: [build-vllm-container, base-reference]
     with:
       containerfile: tegra/Containerfile.podman
       dest-image: ${{ vars.ARTIFACT_REGISTRY_REPO }}
       dest-host: ${{ vars.ARTIFACT_REGISTRY_HOST }}
       tag-list: "vllm-base"
       build-args: |
-        BASE_IMAGE=${{ inputs.base-image }}
+        BASE_IMAGE=${{ needs.base-reference.outputs.base-reference }}
         APP_IMAGES=${{ needs.build-vllm-container.outputs.dest-reference }}
 
   build-vllm:
