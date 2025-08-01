@@ -33,4 +33,4 @@ jobs:
     needs: build-ollama
     with:
       config-file: ./tegra/config.toml
-      src-reference: ${{ needs.build-ollama-with-models.outputs.dest-reference }}
+      src-reference: ${{ needs.build-ollama.outputs.dest-reference }}

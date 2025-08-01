@@ -1,12 +1,14 @@
 ARG VLLM_WHEEL_ARTIFACT
-FROM ${VLLM_WHEEL_ARTIFACT} as vllm
 ARG TORCH_WHEEL_ARTIFACT
-FROM ${TORCH_WHEEL_ARTIFACT} as torch
 ARG TORCH_LIB_ARTIFACT
+ARG BASE_IMAGE
+
+FROM ${VLLM_WHEEL_ARTIFACT} as vllm
+FROM ${TORCH_WHEEL_ARTIFACT} as torch
 FROM ${TORCH_LIB_ARTIFACT} as torch-lib
 
-ARG BASE_IMAGE
 FROM ${BASE_IMAGE}
+
 RUN dnf install -y python3.11 python3.11-devel gcc ninja-build && dnf clean all
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 COPY --from=torch-lib /lib /torch/lib

@@ -8,7 +8,7 @@ jobs:
     secrets: inherit
     with:
       containerfile: tegra/Containerfile.vllm
-      dest-image: ${{ vars.ARTIFACTS_REGISTRY_HOST }}/${{ vars.ARTIFACTS_REGISTRY_REPO }}
+      dest-image: ${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}
       tag-list: "vllm-worker"
       build-args: |
         BASE_IMAGE=registry.access.redhat.com/ubi9/ubi:9.6
