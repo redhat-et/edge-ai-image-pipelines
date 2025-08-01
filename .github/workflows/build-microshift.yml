@@ -34,13 +34,13 @@ jobs:
       containerfile: tegra/Containerfile.microshift
       dest-host: ${{ vars.DEST_REGISTRY_HOST }}
       dest-image: ${{ vars.DEST_REGISTRY_REPO }}
-      tag-list: ${{ inputs.tag_list }}
+      tag-list: ${{ inputs.tag-list }}
       extra-args: |
         --secret id=openshift-pull-secret,src=openshift-pull-secret.json
         --volume /__w/${{ github.event.repository.name }}/${{ github.event.repository.name }}:/repo
       build-args: |
-        BASE_IMAGE=${{ inputs.input_image }}
-        RESOURCE_DEFINITIONS=${{ inputs.resource_definitions }}
+        BASE_IMAGE=${{ inputs.input-image }}
+        RESOURCE_DEFINITIONS=${{ inputs.resource-definitions }}
 
   build-microshift-raw:
     uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
@@ -48,5 +48,5 @@ jobs:
     needs: build-microshift
     with:
       config-file: ./tegra/config.toml
-      src-reference: ${{ needs.build-microshift.outputs.dest_reference }}
+      src-reference: ${{ needs.build-microshift.outputs.dest-reference }}
 
