@@ -1,14 +1,25 @@
 name: Build Inference Server on RHEL Bootc Nvidia Tegra
 on:
   workflow_dispatch:
+    inputs:
+      base-image:
+        type: string
+        required: false
+        default: ${{ vars.DEST_REGISTRY_HOST }}/${{ vars.DEST_REGISTRY_REPO }}:base
   workflow_call:
+    inputs:
+      base-image:
+        type: string
+        required: false
+        default: ${{ vars.DEST_REGISTRY_HOST }}/${{ vars.DEST_REGISTRY_REPO }}:base
+
 jobs:
   build-engine:
     uses: ./.github/workflows/run-jumpstarter-workflow.yml
     secrets: inherit
     with:
       jumpstarter-selector: ${{ vars.JUMPSTARTER_SELECTOR }}
-      image-url: quay.io/redhat-et/rhel-bootc-tegra:base-raw
+      image-url: ${{ inputs.base-image}}-raw
       workflow-cmd: |
         bash inference/build/jmp-build-engine.sh \
           ${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:onnx-repository \
@@ -23,7 +34,7 @@ jobs:
       dest-image: ${{ vars.ARTIFACT_REGISTRY_REPO }}
       tag-list: "triton-inference-server-intermediate"
       build-args: |
-        BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
+        BASE_IMAGE=${{ inputs.base-image }}
         APP_IMAGES=nvcr.io/nvidia/tritonserver:25.05-py3-igpu
 
   build-triton:
@@ -48,5 +59,3 @@ jobs:
     with:
       config-file: ./tegra/config.toml
       src-reference: ${{ needs.build-triton.outputs.dest-reference }}
-
-

@@ -2,18 +2,30 @@ name: Add MicroShift to Bootc Image
 on:
   workflow_dispatch:
     inputs:
-      resource_definitions:
+      resource-definitions:
         type: string
         description: "See README.md"
         required: false
-      input_image:
+      input-image:
         type: string
         description: "URL of image to add Microshift to"
         required: true
-      tag_list:
+      tag-list:
         type: string
         description: "Tag list of new image"
         required: true
+  workflow_call:
+    inputs:
+      resource-definitions:
+        type: string
+        required: false
+      input-image:
+        type: string
+        required: true
+      tag-list:
+        type: string
+        required: true
+
 jobs:
   build-microshift:
     uses: ./.github/workflows/build-rhel-bootc-image.yml

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# set -eux -o pipefail
+set -eux -o pipefail
 
 podman artifact pull $1
 podman artifact extract $1 onnx-repository.tar
@@ -11,7 +11,7 @@ fi
 
 xz onnx-repository.tar
 
-python3 inference/build/jmp-build-engine.py
+python3 triton/build/jmp-build-engine.py
 
 xz -d plan-repository.tar.xz
 podman artifact add $2 plan-repository.tar

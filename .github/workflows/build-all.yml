@@ -2,14 +2,49 @@ name: "Build all Jetson Servers"
 on:
   workflow_dispatch:
 jobs:
+  build-base:
+    uses: ./.github/workflows/build-rhel-bootc-image.yml
+    secrets: inherit
+    with:
+      containerfile: tegra/Containerfile.base
+      dest-image: ${{ vars.DEST_REGISTRY_REPO }}
+      dest-host: ${{ vars.DEST_REGISTRY_HOST }}
+      tag-list: "base"    
+
+  build-base-raw:
+    uses: ./.github/workflow/build-rhel-bootc-raw-image.yml
+    secrets: inherit
+    needs: build-base
+    with:
+      config-file: ./tegra/config.toml
+      src-reference: ${{ needs.build-base.outputs.dest-reference }}
+
   build-ollama:
     uses: ./.github/workflows/build-ollama.yml
     secrets: inherit
-
-  build-triton:
-    uses: ./.github/workflows/build-triton.yml
-    secrets: inherit
+    needs: build-base
+    with:
+      base-image: ${{ needs.build-base.outputs.dest-reference }}
 
   build-vllm:
     uses: ./.github/workflows/build-vllm.yml
     secrets: inherit
+    needs: build-base
+    with:
+      base-image: ${{ needs.build-base.outputs.dest-reference }}
+
+  build-triton:
+    uses: ./.github/workflows/build-triton.yml
+    secrets: inherit
+    needs: build-base
+    with:
+      base-image: ${{ needs.build-base.outputs.dest-reference }}
+
+  build-triton-microshift:
+    uses: ./.github/workflows/build-microshift.yml
+    secrets: inherit
+    needs: build-triton
+    with:
+      input-image: ${{ vars.DEST_REGISTRY_HOST }}/${{ vars.DEST_REGISTRY_REPO }}:triton
+      tag-list: "triton-microshift"
+        resource-definitions: "/repo/triton/microshift/tegra.yml"

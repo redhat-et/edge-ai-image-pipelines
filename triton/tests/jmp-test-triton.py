@@ -29,19 +29,21 @@ with env() as client:
         user=USERNAME,
         connect_kwargs={"password": PASSWORD},
     ) as ssh:
-        ssh.sudo("chown -R admin:admin /var/home/admin")
-        ssh.put("inference/tests/triton-client.yml","triton-client.yml")
-        ssh.put("inference/tests/triton-client.sh","triton-client.sh")
-        ssh.put("inference/tests/triton-client.py","triton-client.py")
-        ssh.put("inference/tests/wait-for-microshift.sh","wait-for-microshift.sh")
-
-        ssh.sudo("/bin/bash wait-for-microshift.sh")
+        ssh.put("triton/tests/triton-client.py","triton-client.py")
+        ssh.put("triton/tests/triton-client.sh","triton-client.sh")
         
-        ssh.sudo("oc apply -f triton-client.yml")
-        
-        ssh.sudo("oc wait --for=condition=Available deployment/triton-inference-server --timeout 300s")
-        ssh.sudo("oc wait --for=condition=Ready pod/triton-client --timeout 300s")
-        
-        ssh.sudo("oc exec -it triton-client -- /bin/bash /share/triton-client.sh")
+        result = ssh.sudo("podman network ls").stdout
+        if "triton" not in result:
+            ssh.sudo(
+                "podman network create triton"
+            )
+        ssh.sudo("podman rm -af")
+        ssh.sudo("ls -R") 
+        ssh.sudo(
+                "podman run --name server --network triton -p8000:8000 --rm -d --device nvidia.com/gpu=all --ipc=host -v /:/share nvcr.io/nvidia/tritonserver:25.05-py3-igpu tritonserver --model-repository=/share/models"
+        )
+        ssh.sudo(
+                "podman run --name client --network triton --rm -it -v .:/share nvcr.io/nvidia/tritonserver:25.05-py3-igpu /bin/bash /share/triton-client.sh"
+        )
 
     client.power.off()

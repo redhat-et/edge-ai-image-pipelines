@@ -1,7 +1,18 @@
 name: "Build Ollama server image"
 on:
   workflow_dispatch:
+    inputs:
+      base-image:
+        type: string
+        required: false
+        default: ${{ vars.DEST_REGISTRY_HOST }}/${{ vars.DEST_REGISTRY_REPO }}:base
   workflow_call:
+    inputs:
+      base-image:
+        type: string
+        required: false
+        default: ${{ vars.DEST_REGISTRY_HOST }}/${{ vars.DEST_REGISTRY_REPO }}:base
+
 jobs:
   build-ollama-container:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
@@ -11,7 +22,7 @@ jobs:
       tag-list: "ollama-worker"
       dest-image: "redhat-et/rhel-bootc-tegra-artifacts"
       build-args: |
-        BASE_IMAGE=fedora:42
+        BASE_IMAGE=registry.access.redhat.com/ubi9/ubi:9.6
 
   build-ollama:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
@@ -23,7 +34,7 @@ jobs:
       tag-list: "ollama"
       # In this case, DAT_IMAGES lists models from a Quay model saddle
       build-args: |
-        BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
+        BASE_IMAGE=${{ inputs.base-image }}
         APP_IMAGES=${{ needs.build-ollama.outputs.dest-reference }}
         DAT_IMAGES=quay.io/ncao/modelsaddle-catalog:gemma3-4b quay.io/ncao/modelsaddle-catalog:gemma3-4b quay.io/ncao/modelsaddle-catalog:granite3.2-vision-2b
 
