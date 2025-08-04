@@ -9,7 +9,9 @@ jobs:
   test-triton:
     uses: ./.github/workflows/test-triton.yml
     secrets: inherit
+    needs: test-ollama
 
   test-triton-microshift:
     uses: ./.github/workflows/test-triton-microshift.yml
     secrets: inherit
+    needs: test-triton

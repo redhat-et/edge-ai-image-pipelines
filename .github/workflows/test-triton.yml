@@ -1,6 +1,7 @@
 name: Test Triton Server
 on:
   workflow_dispatch:
+  workflow_call:
 jobs:
   test-triton:
     uses: ./.github/workflows/run-jumpstarter-workflow.yml
