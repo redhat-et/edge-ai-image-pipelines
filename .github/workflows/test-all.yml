@@ -1,0 +1,15 @@
+name: Test all Jetson Servers
+on:
+  workflow_dispatch:
+jobs:
+  test-ollama:
+    uses: ./.github/workflows/test-ollama.yml
+    secrets: inherit
+
+  test-triton:
+    uses: ./.github/workflows/test-triton.yml
+    secrets: inherit
+
+  test-triton-microshift:
+    uses: ./.github/workflows/test-triton-microshift.yml
+    secrets: inherit

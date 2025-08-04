@@ -1,4 +1,4 @@
-name: Test RHEL bootc image
+name: (Old) Test RHEL bootc image
 on:
   workflow_dispatch:
 jobs:

@@ -1,4 +1,4 @@
-name: "Build vLLM Jetson server"
+name: "Build vLLM Server"
 on:
   workflow_dispatch:
     inputs:

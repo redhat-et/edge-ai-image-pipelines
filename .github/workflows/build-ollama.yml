@@ -1,4 +1,4 @@
-name: "Build Ollama server image"
+name: "Build Ollama Server"
 on:
   workflow_dispatch:
     inputs:

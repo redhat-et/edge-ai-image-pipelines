@@ -1,4 +1,4 @@
-name: Build Inference Server on RHEL Bootc Nvidia Tegra
+name: Build Triton Server
 on:
   workflow_dispatch:
     inputs:

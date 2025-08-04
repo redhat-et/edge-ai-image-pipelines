@@ -1,0 +1,12 @@
+name: Test Triton Microshift server
+on:
+  workflow_dispatch:
+  workflow_call:
+jobs:
+  test-microshift:
+    uses: ./.github/workflows/run-jumpstarter-workflow.yml
+    secrets: inherit
+    with:
+      jumpstarter-selector: ${{ vars.JUMPSTARTER_SELECTOR }}
+      workflow-cmd: pytest -s triton/tests/test_triton_microshift.py
+      image-url: quay.io/redhat-et/rhel-bootc-tegra:triton-microshift-raw

@@ -1,0 +1,11 @@
+name: Test Triton Server
+on:
+  workflow_dispatch:
+jobs:
+  test-triton:
+    uses: ./.github/workflows/run-jumpstarter-workflow.yml
+    secrets: inherit
+    with:
+      jumpstarter-selector: ${{ vars.JUMPSTARTER_SELECTOR }}
+      image-url: quay.io/redhat-et/rhel-bootc-tegra:triton-raw
+      workflow-cmd: pytest -s triton/tests/test_triton.py

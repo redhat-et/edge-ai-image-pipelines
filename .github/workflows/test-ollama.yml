@@ -1,0 +1,12 @@
+name: Test Ollama Server
+on:
+  workflow_dispatch:
+  workflow_call:
+jobs:
+  test-ollama:
+    uses: ./.github/workflows/run-jumpstarter-workflow.yml
+    secrets: inherit
+    with:
+      jumpstarter-selector: ${{ vars.JUMPSTARTER_SELECTOR }}
+      image-url: quay.io/redhat-et/rhel-bootc-tegra:ollama-raw
+      workflow-cmd: pytest -s ollama/test_ollama.py
