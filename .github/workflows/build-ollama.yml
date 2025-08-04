@@ -39,10 +39,9 @@ jobs:
       containerfile: tegra/Containerfile.podman
       dest-image: "redhat-et/rhel-bootc-tegra"
       tag-list: "ollama"
-      # In this case, DAT_IMAGES lists models from a Quay model saddle
       build-args: |
         BASE_IMAGE=${{ needs.base-reference.outputs.base-reference }}
-        APP_IMAGES=${{ needs.build-ollama-container.outputs.dest-reference }}
+        APP_IMAGES=${{ needs.build-ollama-container.outputs.dest-digest }}
 
   build-ollama-raw:
     uses: ./.github/workflows/build-rhel-bootc-raw-image.yml

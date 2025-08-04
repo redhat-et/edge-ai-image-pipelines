@@ -28,13 +28,17 @@ on:
     outputs:
       dest-reference:
         value: ${{ jobs.rhel-bootc-image-build.outputs.dest-reference }}
+      dest-digest:
+        # a bit misleadingly, this also includes the host/repo URL along with the @sha
+        value: ${{ jobs.rhel-bootc-image-build.outputs.dest-digest }}
 
 jobs:
   rhel-bootc-image-build:
     name: Build RHEL bootc image
     runs-on: ${{ inputs.runs-on }}
     outputs:
-      dest-reference: "${{ inputs.dest-host }}/${{ inputs.dest-image }}@${{ steps.push-to-ghcr.outputs.digest }}"
+      dest-digest: "${{ inputs.dest-host }}/${{ inputs.dest-image }}@${{ steps.push-to-ghcr.outputs.digest }}"
+      dest-reference: "${{ steps.push-to-ghcr.outputs.registry-path }}@${{ steps.push-to-ghcr.outputs.digest }}"
     env:
       # Disable Subscription Manager container passthrough
       SMDEV_CONTAINER_OFF: 1
