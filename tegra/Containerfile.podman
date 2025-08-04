@@ -22,7 +22,7 @@ ADD --chmod=0555 https://gitlab.com/fedora/bootc/examples/-/raw/main/physically-
 RUN cat <<EOF > /etc/systemd/system/copy-embedded-images.service
 [Unit]
 Description=Copy embedded images
-Requires=basic.target network-online.target
+Wants=basic.target network-online.target
 After=basic.target network-online.target
 
 [Service]
@@ -31,6 +31,7 @@ ExecStart=/opt/physically-bound-images/copy_embedded_images.sh
 RemainAfterExit=yes
 
 [Install]
+WantedBy=multi-user.target
 EOF
 RUN systemctl enable copy-embedded-images
 
