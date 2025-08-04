@@ -29,6 +29,7 @@ jobs:
       dest-host: ${{ vars.ARTIFACT_REGISTRY_HOST }}
       build-args: |
         BASE_IMAGE=registry.access.redhat.com/ubi9/ubi:9.6
+        MODELS=gemma3:4b granite3.2-vision:2b
 
   build-ollama:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
@@ -42,7 +43,6 @@ jobs:
       build-args: |
         BASE_IMAGE=${{ needs.base-reference.outputs.base-reference }}
         APP_IMAGES=${{ needs.build-ollama-container.outputs.dest-reference }}
-        DAT_IMAGES=quay.io/ncao/modelsaddle-catalog:gemma3-4b quay.io/ncao/modelsaddle-catalog:granite3.2-vision-2b
 
   build-ollama-raw:
     uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
