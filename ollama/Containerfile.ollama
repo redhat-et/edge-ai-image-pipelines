@@ -12,7 +12,9 @@ tar -C /usr -xzf ollama-linux-arm64.tgz
 EOF
 
 RUN <<EOF
+ollama serve &
 for model in ${MODELS}; do
 	ollama pull $model
 done
+kill %1
 EOF
