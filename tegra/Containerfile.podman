@@ -13,9 +13,9 @@ ARG BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
 FROM ${BASE_IMAGE}
 
 # Add scripts for embedding and copying physically bound images
-ADD --chmod=0555 https://gitlab.com/fedora/bootc/examples/-/raw/main/physically-bound-images/embed_image.sh \
+COPY --chmod=0555 ./tegra/physically-bound-images/embed_image.sh \
       /opt/physically-bound-images/embed_image.sh
-ADD --chmod=0555 https://gitlab.com/fedora/bootc/examples/-/raw/main/physically-bound-images/copy_embedded_images.sh \
+COPY --chmod=0555 ./tegra/physically-bound-images/copy_embedded_images.sh \
       /opt/physically-bound-images/copy_embedded_images.sh
 
 # Create and enable a systemd service to copy embedded images
