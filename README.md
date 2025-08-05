@@ -108,20 +108,20 @@ The workflow takes the following inputs:
 
 Each pipeline creates its own `$TAG-raw` in your configured `DEST` repository. This is a compressed flashable Bootc image built for NVIDIA Jetson devices. Below is an explaination of how to run the target workflow on each
 
-### Ollama
+### Running Ollama
 
 Tag: `ollama-raw`
 
 Run `podman run --device nvidia.com/gpu=all --ipc=host ${ARTIFACT_REGISTRY_HOST}/${ARTIFACT_REGISTRY_REPO}:ollama-worker ollama serve`. This will start the Ollama server container, and standard Ollama commands can be run from there.
 
-### Triton
+### Running Triton
 
 Tag: `triton-raw`
 
 Run `podman run --rm -d --device nvidia.com/gpu=all --ipc=host -p8000:8000 -p8001:8001 -p8002:8002 -v /models:/models nvcr.io/nvidia/tritonserver:25.05-py3-igpu tritonserver --model-repository=/models`. The Triton Inference Server is now available on localhost and can be accessed using the Triton client libraries (example given in ./triton/tests/triton-client.py).
 
-### vLLM
+### Running vLLM
 
 Tag: `vllm-raw`
 
-Run something. Idk I haven't messed with vLLM yet.
+Run `podman run --rm -d --device nvidia.com/gpu=all --ipc=host -p8000:8000 -v /usr/share/huggingface/<your model>:/<your model> ${ARTIFACT_REGISTRY_HOST}/${ARTIFACT_REGISTRY_REPO}:vllm-worker python -m vllm.entrypoints.openai.api_server --model /<your model>` where `<your model>` is one of the configured huggingface repos from [vLLM build](#vllm-server-setup). The vLLM server is now available at port 8000 of localhost and can be interfaced with using the OpenAI client libraries.
