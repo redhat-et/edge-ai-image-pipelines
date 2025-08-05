@@ -118,7 +118,7 @@ Run `podman run --device nvidia.com/gpu=all --ipc=host ${ARTIFACT_REGISTRY_HOST}
 
 Tag: `triton-raw`
 
-Run `podman run --rm -d --device nvidia.com/gpu=all --ipc=host -p8000:8000 -p8001:8001 -p8002:8002 -v /models:/models nvcr.io/nvidia/tritonserver:25.05-py3-igpu tritonserver --model-repository=/models`. The Triton Inference Server is now available on localhost and can be accessed using the Triton client libraries (example given in ./triton/tests/triton-client.py).
+Run `podman run --rm -d --device nvidia.com/gpu=all --ipc=host -p8000:8000 -p8001:8001 -p8002:8002 -v /models:/models nvcr.io/nvidia/tritonserver:25.07-py3-igpu tritonserver --model-repository=/models`. The Triton Inference Server is now available on localhost and can be accessed using the Triton client libraries (example given in ./triton/tests/triton-client.py).
 
 ### Running vLLM
 

@@ -41,7 +41,7 @@ jobs:
       tag-list: "triton-base"
       build-args: |
         BASE_IMAGE=${{ needs.base-reference.outputs.base-reference }}
-        APP_IMAGES=nvcr.io/nvidia/tritonserver:25.05-py3-igpu
+        APP_IMAGES=nvcr.io/nvidia/tritonserver:25.07-py3-igpu
 
   build-triton:
     needs: [build-engine, build-triton-base]

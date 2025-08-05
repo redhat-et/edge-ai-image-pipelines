@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: triton
-        image: "nvcr.io/nvidia/tritonserver:25.05-py3-igpu"
+        image: "nvcr.io/nvidia/tritonserver:25.07-py3-igpu"
         args: ["tritonserver", "--model-repository=/models"]
         ports:
         - containerPort: 8000

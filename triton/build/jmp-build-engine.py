@@ -40,7 +40,7 @@ with env() as client:
                 print(f"WARNING: could not parse path {path}, skipping")
                 continue
 
-            ssh.sudo(f"podman run --rm -it --device nvidia.com/gpu=all -v ./onnx-repository:/onnx-repository nvcr.io/nvidia/tritonserver:25.05-py3-igpu /usr/src/tensorrt/bin/trtexec --onnx=/onnx-repository/{subpath}.onnx --saveEngine=/onnx-repository/{subpath}.plan ")
+            ssh.sudo(f"podman run --rm -it --device nvidia.com/gpu=all -v ./onnx-repository:/onnx-repository nvcr.io/nvidia/tritonserver:25.07-py3-igpu /usr/src/tensorrt/bin/trtexec --onnx=/onnx-repository/{subpath}.onnx --saveEngine=/onnx-repository/{subpath}.plan ")
             ssh.sudo(f"rm -f {path}")
 
         ssh.sudo("mv onnx-repository plan-repository")
