@@ -6,6 +6,9 @@ from jumpstarter_driver_network.adapters import FabricAdapter
 USERNAME = "admin"
 PASSWORD = "passwd"
 
+for arg in sys.argv:
+    if "ollama-worker" in arg:
+        ollama_worker = arg.split("=")[1]
 
 class TestOllama(JumpstarterTest):
     def test_ollama(tmp_path, client):
@@ -29,7 +32,7 @@ class TestOllama(JumpstarterTest):
             ) as ssh:
                 ssh.sudo(
                     "podman run --name ollama -d -i --rm --device nvidia.com/gpu=all "
-                    f"{sys.argv[1]}"
+                    f"{ollama_worker}"
                 )
                 assert (
                     "library=cuda variant=jetpack6 compute=8.7 driver=12.6 name=Orin"

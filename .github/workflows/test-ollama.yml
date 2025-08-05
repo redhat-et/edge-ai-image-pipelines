@@ -9,4 +9,4 @@ jobs:
     with:
       jumpstarter-selector: ${{ vars.JUMPSTARTER_SELECTOR }}
       image-url: quay.io/redhat-et/rhel-bootc-tegra:ollama-raw
-      workflow-cmd: pytest -s ollama/test_ollama.py
+      workflow-cmd: pytest -s ollama/test_ollama.py --ollama-worker=${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:ollama-worker
