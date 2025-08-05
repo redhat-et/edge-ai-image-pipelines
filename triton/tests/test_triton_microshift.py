@@ -1,10 +1,13 @@
 import sys
+from os.path import join, dirname
 
 from jumpstarter_testing.pytest import JumpstarterTest
 from jumpstarter_driver_network.adapters import FabricAdapter
 
 USERNAME = "admin"
 PASSWORD = "passwd"
+WD = dirname(__file__)
+
 
 class TestTritonMicroshift(JumpstarterTest):
     def test_triton_microshift(tmp_path, client):
@@ -28,10 +31,10 @@ class TestTritonMicroshift(JumpstarterTest):
                 connect_kwargs={"password": PASSWORD},
             ) as ssh:
                 ssh.sudo("chown -R admin:admin /var/home/admin")
-                ssh.put("triton/tests/triton-client.yml","triton-client.yml")
-                ssh.put("triton/tests/triton-client.sh","triton-client.sh")
-                ssh.put("triton/tests/triton-client.py","triton-client.py")
-                ssh.put("triton/tests/wait-for-microshift.sh","wait-for-microshift.sh")
+                ssh.put(f"{WD}/triton-client.yml","triton-client.yml")
+                ssh.put(f"{WD}/triton-client.sh","triton-client.sh")
+                ssh.put(f"{WD}/triton-client.py","triton-client.py")
+                ssh.put(f"{WD}/wait-for-microshift.sh","wait-for-microshift.sh")
 
                 ssh.sudo("/bin/bash wait-for-microshift.sh")
                 

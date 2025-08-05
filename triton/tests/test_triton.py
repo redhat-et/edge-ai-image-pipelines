@@ -1,11 +1,12 @@
 import sys
+import os
 
 from jumpstarter_testing.pytest import JumpstarterTest
 from jumpstarter_driver_network.adapters import FabricAdapter
 
 USERNAME = "admin"
 PASSWORD = "passwd"
-
+WD = os.path.dirname(__file__)
 
 class TestTriton(JumpstarterTest):
     def test_driver_qemu(tmp_path, client):
@@ -28,8 +29,8 @@ class TestTriton(JumpstarterTest):
                 user=USERNAME,
                 connect_kwargs={"password": PASSWORD},
             ) as ssh:
-                ssh.put("triton/tests/triton-client.py","triton-client.py")
-                ssh.put("triton/tests/triton-client.sh","triton-client.sh")
+                ssh.put(f"{WD}/triton-client.py","triton-client.py")
+                ssh.put(f"{WD}/triton-client.sh","triton-client.sh")
                 
                 result = ssh.sudo("podman network ls").stdout
                 if "triton" not in result:
