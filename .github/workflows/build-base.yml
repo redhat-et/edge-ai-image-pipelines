@@ -1,0 +1,22 @@
+name: "Build base image"
+on: 
+  workflow_dispatch:
+  workflow_call:
+jobs:
+  build-base:
+    uses: ./.github/workflows/build-rhel-bootc-image.yml
+    secrets: inherit
+    with:
+      containerfile: tegra/Containerfile.base
+      dest-image: ${{ vars.DEST_REGISTRY_REPO }}
+      dest-host: ${{ vars.DEST_REGISTRY_HOST }}
+      tag-list: "base"    
+
+  build-base-raw:
+    uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
+    secrets: inherit
+    needs: build-base
+    with:
+      config-file: ./tegra/config.toml
+      src-reference: ${{ needs.build-base.outputs.dest-reference }}
+

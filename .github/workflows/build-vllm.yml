@@ -60,8 +60,7 @@ jobs:
       tag-list: "vllm"
       build-args: |
         BASE_IMAGE=${{ needs.build-vllm-base.outputs.dest-reference }}
-        HF_REPOS=ibm-granite/granite-vision-3.2-2b moondream/moondream-2b-2025-04-14
-
+        HF_REPOS=ibm-granite/granite-vision-3.2-2b 
   build-vllm-raw:
     uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
     secrets: inherit
