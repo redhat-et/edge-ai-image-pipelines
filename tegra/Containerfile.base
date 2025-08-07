@@ -1,2 +1,2 @@
-FROM quay.io/redhat-user-workloads/octo-edge-tenant/rhel-bootc-jetson-rhel96@sha256:b125a1d6a9390c9f6b7fc4e4087977a30ee16a31ae3edb8f652b2e5b0711f8cc
+FROM quay.io/redhat-user-workloads/octo-edge-tenant/rhel-bootc-jetson-rhel96:9.6
 LABEL quay.expires-after=7d

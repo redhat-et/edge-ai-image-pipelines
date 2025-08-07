@@ -22,6 +22,7 @@ if [[ $image =~ .*:.*@sha256:.* ]]; then
 	dst=$repo:$tag
 fi
 
+exit 0
 
 mkdir -p /usr/lib/containers-image-cache
 skopeo copy $additional_copy_args --preserve-digests docker://$src dir:/usr/lib/containers-image-cache/$fsha
