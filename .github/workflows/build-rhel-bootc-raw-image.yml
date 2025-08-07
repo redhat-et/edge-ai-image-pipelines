@@ -91,7 +91,6 @@ jobs:
           mv ./output/image/disk.raw image.raw
           xz image.raw
           podman artifact add  ${REF} image.raw.xz
-          podman manifest annotate --annotation quay.expires-after=7d ${REF}
           podman artifact push ${REF}
           echo "dest-reference=${REF}" >> "$GITHUB_OUTPUT"
           
