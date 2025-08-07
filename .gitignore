@@ -3,3 +3,4 @@
 .aider*
 *.tar
 *.xz
+**/__pycache__
