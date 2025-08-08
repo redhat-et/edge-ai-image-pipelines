@@ -8,10 +8,25 @@ client = openai.OpenAI(
 
 # Call the chat completions endpoint
 completion = client.chat.completions.create(
-  model="model",
+  model="/share/granite",
   messages=[
-    {"role": "system", "content": "You are a helpful assistant."},
-    {"role": "user", "content": "What is the capital of Virginia?"}
+    {
+        "role": "system", 
+        "content": "You are a helpful assistant."
+    },
+    {
+        "role": "user", 
+        "content": [
+            {
+                "type": "image_url",
+                "image_url": {"url":"https://cataas.com/cat"}
+            },
+            {
+                "type": "text",
+                "text": "Describe the provided image"
+            },
+        ]
+    }
   ]
 )
 

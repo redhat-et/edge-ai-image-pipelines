@@ -8,7 +8,7 @@ USERNAME = "admin"
 PASSWORD = "passwd"
 WD = os.path.dirname(__file__)
 
-worker_repo = os.getenv("WORKER_REPO")
+vllm_app = os.getenv("VLLM_APP")
 
 class TestVLLM(JumpstarterTest):
     def test_vllm(tmp_path, client):
@@ -31,6 +31,7 @@ class TestVLLM(JumpstarterTest):
                 user=USERNAME,
                 connect_kwargs={"password": PASSWORD},
             ) as ssh:
+                ssh.put(f"{WD}/wait-for-vllm.py","wait-for-vllm.py")
                 ssh.put(f"{WD}/vllm-client.py","vllm-client.py")
                 ssh.put(f"{WD}/vllm-client.sh","vllm-client.sh")
                 
@@ -41,12 +42,11 @@ class TestVLLM(JumpstarterTest):
                     )
                 ssh.sudo("podman rm -af")
                 ssh.sudo("ls -R")
-                print(f"{worker_repo}:vllm-worker")
                 ssh.sudo(
-                    f"podman run --name server --network vllm --rm -d --device nvidia.com/gpu=all --ipc=host -p8000:8000 -v ./granite:/granite {worker_repo}:vllm-worker python -m vllm.entrypoints.openai.api_server --model /granite"
+                    "podman run --name server --network vllm -d --device nvidia.com/gpu=all --ipc=host -p8000:8000 -v .:/share quay.io/redhat-user-workloads/octo-edge-tenant/jetson-wheels-vllm-app@sha256:4d1ed330d00308a3148cdea4495be09a05cee9cf7a114eed0ca83e40e6d58794 /bin/bash -c \"/app/bin/python -m vllm.entrypoints.openai.api_server --model /share/granite --gpu_memory_utilization=0.8 --max_model_len=4096 > /share/vllm.log\""    
                 )
                 ssh.sudo(
-                        f"podman run --name client --network vllm --rm -it -v .:/share {worker_repo}:vllm-worker /bin/bash /share/vllm-client.sh"
+                        f"podman run --name client --network vllm --rm -it -v .:/share quay.io/redhat-user-workloads/octo-edge-tenant/jetson-wheels-vllm-app@sha256:4d1ed330d00308a3148cdea4495be09a05cee9cf7a114eed0ca83e40e6d58794 /bin/bash /share/vllm-client.sh"
                 )
             client.power.off()
 
