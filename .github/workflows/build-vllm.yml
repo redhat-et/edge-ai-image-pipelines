@@ -19,27 +19,11 @@ jobs:
     with:
       base-reference: ${{ inputs.base-reference }}
 
-  build-vllm-container:
-    uses: ./.github/workflows/build-rhel-bootc-image.yml
-    secrets: inherit
-    with:
-      containerfile: vllm/Containerfile.vllm
-      dest-image: ${{ vars.ARTIFACT_REGISTRY_REPO }}
-      dest-host: ${{ vars.ARTIFACT_REGISTRY_HOST }}
-      tag-list: "vllm-worker"
-      # TODO: once we know how we're building & distributing custom wheels, make this configurable
-      # for now, just take them from Nick's Quay
-      build-args: |
-        BASE_IMAGE=registry.access.redhat.com/ubi9/ubi:9.6
-        TORCH_WHEEL_ARTIFACT=quay.io/ncao/wheels:torch
-        TORCH_LIB_ARTIFACT=quay.io/redhat-user-workloads/octo-edge-tenant/jetson-wheels-torch-lib@sha256:052c3fa3dd9d41b5f3ad44e85e165e234ec46f796210358ee42a5e25f6c36964
-        VLLM_WHEEL_ARTIFACT=quay.io/ncao/wheels:vllm
-
   # vLLM with no models. Those are added in the next job
   build-vllm-base:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
     secrets: inherit
-    needs: [build-vllm-container, base-reference]
+    needs: base-reference
     with:
       containerfile: tegra/Containerfile.podman
       dest-image: ${{ vars.ARTIFACT_REGISTRY_REPO }}
@@ -47,7 +31,7 @@ jobs:
       tag-list: "vllm-base"
       build-args: |
         BASE_IMAGE=${{ needs.base-reference.outputs.base-reference }}
-        APP_IMAGES=${{ needs.build-vllm-container.outputs.dest-reference }}
+        APP_IMAGES=quay.io/redhat-user-workloads/octo-edge-tenant/jetson-wheels-vllm-app@sha256:4d1ed330d00308a3148cdea4495be09a05cee9cf7a114eed0ca83e40e6d58794
 
   build-vllm:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
@@ -60,7 +44,8 @@ jobs:
       tag-list: "vllm"
       build-args: |
         BASE_IMAGE=${{ needs.build-vllm-base.outputs.dest-reference }}
-        HF_REPOS=ibm-granite/granite-vision-3.2-2b 
+        HF_REPOS=ibm-granite/granite-vision-3.2-2b
+
   build-vllm-raw:
     uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
     secrets: inherit

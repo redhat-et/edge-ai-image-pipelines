@@ -8,9 +8,7 @@ USERNAME = "admin"
 PASSWORD = "passwd"
 WD = os.path.dirname(__file__)
 
-for arg in sys.argv:
-    if "--worker-repo=" in arg:
-        worker_repo = arg.split("=")[1]
+worker_repo = os.getenv("WORKER_REPO")
 
 class TestVLLM(JumpstarterTest):
     def test_vllm(tmp_path, client):
@@ -43,11 +41,12 @@ class TestVLLM(JumpstarterTest):
                     )
                 ssh.sudo("podman rm -af")
                 ssh.sudo("ls -R")
+                print(f"{worker_repo}:vllm-worker")
                 ssh.sudo(
-                    f"podman run --name server --network vllm --rm -d --device nvidia.com/gpu=all --ipc=host -p8000:8000 -v /usr/share/huggingface/ibm-granite/granite-vision-3.2-2b:/model ${worker_repo}:vllm-worker python -m vllm.entrypoints.openai.api_server --model /model"
+                    f"podman run --name server --network vllm --rm -d --device nvidia.com/gpu=all --ipc=host -p8000:8000 -v ./granite:/granite {worker_repo}:vllm-worker python -m vllm.entrypoints.openai.api_server --model /granite"
                 )
                 ssh.sudo(
-                        f"podman run --name client --network vllm --rm -it -v .:/share ${worker_repo}:vllm-worker /bin/bash /share/vllm-client.sh"
+                        f"podman run --name client --network vllm --rm -it -v .:/share {worker_repo}:vllm-worker /bin/bash /share/vllm-client.sh"
                 )
             client.power.off()
 
