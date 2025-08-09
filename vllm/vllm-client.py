@@ -8,7 +8,7 @@ client = openai.OpenAI(
 
 # Call the chat completions endpoint
 completion = client.chat.completions.create(
-  model="/share/granite",
+  model="/huggingface/ibm-granite/granite-vision-3.2-2b",
   messages=[
     {
         "role": "system", 
