@@ -76,6 +76,9 @@ jobs:
             fi
             sleep 5
           done
+          
+          echo Acquired lease for exporter $EXPORTER
+          
           echo "LEASE=$LEASE" >> "$GITHUB_ENV"
 
       - name: Flash bootc image
