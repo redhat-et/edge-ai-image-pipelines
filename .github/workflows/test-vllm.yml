@@ -1,0 +1,12 @@
+name: Test vLLM Server
+on:
+  workflow_dispatch:
+  workflow_call:
+jobs:
+  test-vllm:
+    uses: ./.github/workflows/run-jumpstarter-workflow.yml
+    secrets: inherit
+    with:
+      jumpstarter-selector: ${{ vars.JUMPSTARTER_SELECTOR }}
+      image-url: quay.io/redhat-et/rhel-bootc-tegra:vllm-raw
+      workflow-cmd: pytest -s vllm/test_vllm.py

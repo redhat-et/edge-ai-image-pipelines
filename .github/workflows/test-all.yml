@@ -15,3 +15,8 @@ jobs:
     uses: ./.github/workflows/test-triton-microshift.yml
     secrets: inherit
     needs: test-triton
+
+  test-vllm:
+    uses: ./.github/workflows/test-vllm.yml
+    secrets: inherit
+    needs: test-triton-microshift
