@@ -32,7 +32,10 @@ class TestVLLM(JumpstarterTest):
                 ssh.put(f"{WD}/wait-for-vllm.py","wait-for-vllm.py")
                 ssh.put(f"{WD}/vllm-client.py","vllm-client.py")
                 ssh.put(f"{WD}/vllm-client.sh","vllm-client.sh")
-                
+                ssh.put(f"{WD}/wait-for-copy-embedded-images.sh","wait-for-copy-embedded-images.sh") 
+
+                ssh.sudo("wait-for-copy-embedded-images.sh")
+
                 result = ssh.sudo("podman network ls").stdout
                 if "vllm" not in result:
                     ssh.sudo(
@@ -47,4 +50,3 @@ class TestVLLM(JumpstarterTest):
                         f"podman run --name client --network vllm --rm -it -v .:/share quay.io/redhat-user-workloads/octo-edge-tenant/jetson-wheels-vllm-app@sha256:4d1ed330d00308a3148cdea4495be09a05cee9cf7a114eed0ca83e40e6d58794 /bin/bash /share/vllm-client.sh"
                 )
             client.power.off()
-
