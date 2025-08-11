@@ -29,5 +29,5 @@ if [[ $image =~ .*:.*@sha256:.* ]]; then
 fi
 
 mkdir -p /usr/lib/containers-image-cache
-skopeo copy $additional_copy_args --preserve-digests docker://$src dir:/usr/lib/containers-image-cache/$fsha
+skopeo copy --multi-arch=all --preserve-digests docker://$src dir:/usr/lib/containers-image-cache/$fsha
 echo "$dst,$fsha" >> /usr/lib/containers-image-cache/mapping.txt

@@ -8,8 +8,6 @@ USERNAME = "admin"
 PASSWORD = "passwd"
 WD = os.path.dirname(__file__)
 
-vllm_app = os.getenv("VLLM_APP")
-
 class TestVLLM(JumpstarterTest):
     def test_vllm(tmp_path, client):
         with client.log_stream():

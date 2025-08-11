@@ -45,6 +45,6 @@ for IMAGE in ${APP_IMAGES}; do
 done
 # Embed data images (like modelcars) ignoring the arch
 for IMAGE in ${DAT_IMAGES}; do
-  /opt/physically-bound-images/embed_image.sh ${IMAGE} --multi-arch=all
+  /opt/physically-bound-images/embed_image.sh ${IMAGE}
 done
 PULL
