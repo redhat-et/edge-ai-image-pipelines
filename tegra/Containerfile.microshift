@@ -48,11 +48,18 @@ WantedBy=multi-user.target
 EOF
 RUN systemctl enable microshift-make-rshared.service
 
+# Reload PBI scripts 
+COPY --chmod=0555 ./tegra/physically-bound-images/embed_image.sh \
+      /opt/physically-bound-images/embed_image.sh
+COPY --chmod=0555 ./tegra/physically-bound-images/copy_embedded_images.sh \
+      /opt/physically-bound-images/copy_embedded_images.sh
+
+
 # Pull the container images into storage. Requires that copy-embeded-images.service was installed (found in Containerfile.podman)
 RUN --mount=type=secret,id=openshift-pull-secret,dst=/run/secrets/pull-secret.json <<EOF
 images="$(jq -r ".images[]" /usr/share/microshift/release/release-"$(uname -m)".json)" ; 
 for img in ${images} ; do 
-	/opt/physically-bound-images/embed_image.sh $img "--authfile /run/secrets/pull-secret.json --multi-arch=all"
+	/opt/physically-bound-images/embed_image.sh $img --authfile /run/secrets/pull-secret.json
 done
 EOF
 

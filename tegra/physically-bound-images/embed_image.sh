@@ -3,7 +3,7 @@
 set -euxo pipefail
 
 image=$1
-additional_copy_args=${2:-""}
+additional_copy_args=${@:2}
 
 fsha=$(echo "$image" | sha256sum | awk '{ print $1 }')
 
@@ -29,5 +29,5 @@ if [[ $image =~ .*:.*@sha256:.* ]]; then
 fi
 
 mkdir -p /usr/lib/containers-image-cache
-skopeo copy --multi-arch=all --preserve-digests docker://$src dir:/usr/lib/containers-image-cache/$fsha
+skopeo copy --multi-arch=all --preserve-digests $additional_copy_args docker://$src dir:/usr/lib/containers-image-cache/$fsha
 echo "$dst,$fsha" >> /usr/lib/containers-image-cache/mapping.txt
