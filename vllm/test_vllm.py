@@ -34,7 +34,7 @@ class TestVLLM(JumpstarterTest):
                 ssh.put(f"{WD}/vllm-client.sh","vllm-client.sh")
                 ssh.put(f"{WD}/wait-for-copy-embedded-images.sh","wait-for-copy-embedded-images.sh") 
 
-                ssh.sudo("wait-for-copy-embedded-images.sh")
+                ssh.sudo("bash wait-for-copy-embedded-images.sh")
 
                 result = ssh.sudo("podman network ls").stdout
                 if "vllm" not in result:
@@ -44,7 +44,7 @@ class TestVLLM(JumpstarterTest):
                 ssh.sudo("podman rm -af")
                 ssh.sudo("ls -R")
                 ssh.sudo(
-                    "podman run --name server --network vllm -d --device nvidia.com/gpu=all --ipc=host -p8000:8000 -v /usr/share/huggingface:/huggingface quay.io/redhat-user-workloads/octo-edge-tenant/jetson-wheels-vllm-app@sha256:4d1ed330d00308a3148cdea4495be09a05cee9cf7a114eed0ca83e40e6d58794 /bin/bash -c \"/app/bin/python -m vllm.entrypoints.openai.api_server --model /huggingface/ibm-granite/granite-vision-3.2-2b --gpu_memory_utilization=0.8 --max_model_len=4096 > /share/vllm.log\""    
+                    "podman run --name server --network vllm -d --device nvidia.com/gpu=all --ipc=host -p8000:8000 -v .:/share -v /usr/share/huggingface:/huggingface quay.io/redhat-user-workloads/octo-edge-tenant/jetson-wheels-vllm-app@sha256:4d1ed330d00308a3148cdea4495be09a05cee9cf7a114eed0ca83e40e6d58794 /bin/bash -c \"/app/bin/python -m vllm.entrypoints.openai.api_server --model /huggingface/ibm-granite/granite-vision-3.2-2b --gpu_memory_utilization=0.8 --max_model_len=4096 > /share/vllm.log\""    
                 )
                 ssh.sudo(
                         f"podman run --name client --network vllm --rm -it -v .:/share quay.io/redhat-user-workloads/octo-edge-tenant/jetson-wheels-vllm-app@sha256:4d1ed330d00308a3148cdea4495be09a05cee9cf7a114eed0ca83e40e6d58794 /bin/bash /share/vllm-client.sh"
