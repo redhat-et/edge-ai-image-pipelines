@@ -10,28 +10,48 @@ The tags are:
 * `base`: a base image containing the necessary JetPack drivers to run AI workflows
 * `ollama`: ollama Server
 * `vllm`: vLLM Server
-* `triton`: Triton Server
-* `triton-microshift`: Triton Server
+* `triton`: Triton Inference Server
+* `triton-microshift`: Triton Inference Server on Microshift
 
 For each tag TAG, `${TAG}-raw` will also be generated with the flashable Bootc image
 
 ## Table of Contents
 
-To configure each of the application build pipelines:
-* [Global Configuration](#variables-required)
-* [Ollama](#ollama-setup)
-* [Triton](#triton-setup)
-* [vLLM](#vllm-setup)
+[Quick Start](#quick-start)
 
-To set up integration tests:
+Configuring image build:
+* [Global Configuration](#variables-required)
+* [Ollama](#ollama-build-config)
+* [vLLM](#vllm-build-config)
+* [Triton](#triton-build-config)
+* [Microshift](#microshift-build-config)
+
+Running images:
+* [Integration Tests](#integration-tests)
+* [Ollama](#running-ollama)
+* [vLLM](#running-vllm)
+* [Triton](#running-triton)
+* [Triton Microshift](#running-triton-microshift)
+
+Troubleshooting:
+* [Jumpstarter gRPC Timeouts](#grpc-troubleshooting)
 
 ## Configuration
+
+### Quick Start
+
+A number of pre-built RHEL Bootc Jetson images are available on [Quay](https://quay.io/repository/redhat-et/rhel-bootc-tegra?tab=tags&tag=latest) as OCI artifacts. Each `$APP-raw` tag is an xz-compressed Bootc image of the corresponding app. To run one of these applications, flash the image to your Jetson device and consult the corresponding section in [Running Images](#running-images).
+
+If you'd like to build your own Bootc Images (e.g. with different models or extra services):
+* Configure repository variables and secrets according to [Section: Variables](#variables-required). Note that if you aren't building Triton or Microshift, there are certain variables you do not have to configure.
+* Consult the corresponding section under "Configuring image build". This will tell you how to add your desired models to the image
+* Run the corresponding workflow titled "Build $APP". This will take a while
 
 ### Variables (Required)
 
 In order to use these pipelines, a number of GitHub Repository secrets and variables must be configured.
 
-The secrets configure authentication with three different container registries, the `SOURCE` registry contains the base RHEL Bootc image (registry.redhat.io), an `ARTIFACTS` registry where consumable artifacts are stored, and a `DEST` registry where the compiled images are stored
+The secrets configure authentication with three different container registries, the `SOURCE` registry contains the base RHEL Bootc image (registry.redhat.io), an `ARTIFACTS` registry where consumable, non-final artifacts are stored, and a `DEST` registry where the compiled images are stored
 
 Required Repository Secrets:
 * `ARTIFACT_REGISTRY_PASSWORD`
@@ -42,8 +62,8 @@ Required Repository Secrets:
 * `SOURCE_REGISTRY_USER`
 * `RHT_ACT_KEY`: A Red Hat subscription manager activation key
 * `RHT_ORGID`: A Red Hat subscription manager organization ID
-* `JUMPSTARTER_CLIENT_CONFIG`: A Jumpstarter user config YAML document
-* `OPENSHIFT_PULL_SECRET`: An OpenShift pull secret (obtained from Red Hat Cluster Mananger)
+* `JUMPSTARTER_CLIENT_CONFIG`: A Jumpstarter user config YAML document (only required for running Triton Server build and integration tests)
+* `OPENSHIFT_PULL_SECRET`: An OpenShift pull secret obtained from Red Hat Cluster Mananger (only required for running Microshift build)
 
 Required Repository Variables:
 * `ARTIFACT_REGISTRY_HOST`
@@ -52,17 +72,26 @@ Required Repository Variables:
 * `DEST_REGISTRY_REPO`
 * `JUMPSTARTER_SELECTOR`: Jumpstarter selector used to acquire Jumpstarter-controlled device for these workflows (passed as jmp create lease --selector $JUMPSTARTER_SELECTOR)
 
-### Ollama Setup
+### Ollama Build Config
 
-To configure Ollama with a particular model, simply add it's name from the Ollama Library to MODELS in `./.github/workflows/build-ollama.yml`
+You can configure models installed by "Build Ollama Server" `workflow_dispatch` by simply listing the models from the [Ollama Library](https://ollama.com/library) (space delimited) in the `models` input
 
-### Triton Inference Server Setup
+### vLLM Build Config
 
-In order to run Triton Inference Server, you first need models. To achieve maximum performance, models must be compiled to the `.plan` format using `trtexec` on-device. To prepare your models to be run on Triton, first convert them to the ONNX format, place them in a `onnx-repository` directory, each at the path `onnx-repository/{model name}/{version}/model.onnx`, and then TAR this directory and upload it to your `ARTIFACT_REGISTY_REPO` with tag `onnx-repository`, e.g.
+You can configure models installed by "Build vLLM Server" `workflow_dispatch` by simply listing the set of HuggingFace repositories (space delimited) in the `models` input.
+
+### Triton Build Config
+
+Triton server uses the highly performant `.plan` format for models. These are acquired by natively (on-device) compiling them from `.onnx` using `trtexec`. To set up your models for compilation, do the following:
+* Export models to `.onnx` format
+* Create a directory `onnx-repository`
+* Move each model to `onnx-repository/<model name>/<version>/model.onnx`
+* Tar `onnx-repository`
+* Push `onnx-repository.tar` to your artifact registry with the tag onnx-repository
+
+As an example:
 
 ```
-ref=$ARTIFACT_REGISTRY_HOST/$ARTIFACT_REGISTRY_REPO:onnx-repository
-
 mkdir onnx-repository
 mkdir -p onnx-repository/ram_plus/1
 mv ram_plus.onnx onnx-repository/ram_plus/1/model.onnx
@@ -70,18 +99,13 @@ mkdir -p onnx-repository/yolo11x/1
 mv yolo11x.onnx onnx-repository/yolo11x/1/model.onnx
 
 tar cf onnx-repository.tar onnx-repository
+
+ref=$ARTIFACT_REGISTRY_HOST/$ARTIFACT_REGISTRY_REPO:onnx-repository
 podman artifact add $ref onnx-repository.tar
 podman artifact push $ref
 ```
 
-The pipeline will then automatically compile these models into .plan format using the pipeline's jumpstarter device and reupload it to `ARTIFACT_REGISTRY_REPO` under the tag `plan-repository`. This is subsequently consumed by the pipeline to produce your Bootc image.
-
-### vLLM Server Setup
-
-vLLM models are stored in HuggingFace repositories. To add your models to the vLLM image you can modify the `HF_REPOS` build variable found in `./.github/workflows/build-vllm.yml`.
-
-Additionally, you must use custom wheels for both PyTorch and vLLM. While we currently have no official CI that serves these, they are currently pulled from `quay.io/ncao/wheels`. They will be installed to the venv found at `/app`.
-
+When `build-triton.yml` is run it will compile these models into .plan format using the pipeline's jumpstarter device and reupload it to `ARTIFACT_REGISTRY_REPO` under the tag `plan-repository`. This is subsequently consumed by the pipeline to produce your Bootc image.
 
 ### MicroShift Setup
 
@@ -92,10 +116,13 @@ The `workflow_dispatch` event has the following inputs:
 * `input_image`: A reference to the Bootc container image that MicroShift should be added to
 * `tags_list`: Tag list to apply to the output image
 
+An example resource definition for a Triton Inference Server can be found in `./triton/microshift/triton.yml`.
+
 The flashable bootc image will be pushed to `$DEST_REGISTRY_HOST/$DEST_REGISTRY_REPO:$tag` for each tag in `tags_list`
 
+## Running Images
 
-## Integration Testing
+### Integration Tests
 
 Integration testing is done via `jumpstarter` as found in `./.github/workflows/run-jumpstarter-workflow.yml`. To run integration tests, you can use this action to flash your produced image onto your Jetson device and run tests using the Jumpstarter Python API.
 
@@ -104,15 +131,19 @@ The workflow takes the following inputs:
 * `jumpstarter-selector`: Selector used to identify the Jumpstarter device to test (will be passed to jmp as `jmp create lease --selector ${{ inputs.jumpstarter-selector }}`)
 * `workflow-cmd`: Command to run under Jumpstarter lease. Generally, this will call a Python script (e.g. `./triton/tests/test_triton.py`) that will do all the heavy lifting.
 
-## Usage
-
-Each pipeline creates its own `$TAG-raw` in your configured `DEST` repository. This is a compressed flashable Bootc image built for NVIDIA Jetson devices. Below is an explaination of how to run the target workflow on each
+A number of example workflows are found in this repository as `./.github/workflows/test-*`.
 
 ### Running Ollama
 
 Tag: `ollama-raw`
 
-Run `podman run --device nvidia.com/gpu=all --ipc=host ${ARTIFACT_REGISTRY_HOST}/${ARTIFACT_REGISTRY_REPO}:ollama-worker ollama serve`. This will start the Ollama server container, and standard Ollama commands can be run from there.
+Run `podman run --device nvidia.com/gpu=all --ipc=host ${ARTIFACT_REGISTRY_HOST}/${ARTIFACT_REGISTRY_REPO}:ollama-worker ollama serve`. If using the prebuilt image from quay.io/redhat-et, `${ARTIFACT_REGISTRY_HOST}/${ARTIFACT_REGISTRY_REPO}` is `quay.io/redhat-et/rhel-bootc-tegra-artifacts`.
+
+### Running vLLM
+
+Tag: `vllm-raw`
+
+Run `podman run --name server --network vllm -d --device nvidia.com/gpu=all --ipc=host -p8000:8000 -v .:/share -v /usr/share/huggingface:/huggingface quay.io/redhat-user-workloads/octo-edge-tenant/jetson-wheels-vllm-app@sha256:4d1ed330d00308a3148cdea4495be09a05cee9cf7a114eed0ca83e40e6d58794 /bin/bash -c \"/app/bin/python -m vllm.entrypoints.openai.api_server --model /huggingface/<your model> --gpu_memory_utilization=0.8 --max_model_len=8200 > /share/vllm.log\"` where `<your model>` is one of the configured huggingface repos from [vLLM build](#vllm-server-setup). If using the prebuilt image from quay.io/redhat-et, the only model available will be ibm-granite/granite-vision-3.2-2b
 
 ### Running Triton
 
@@ -120,8 +151,8 @@ Tag: `triton-raw`
 
 Run `podman run --rm -d --device nvidia.com/gpu=all --ipc=host -p8000:8000 -p8001:8001 -p8002:8002 -v /models:/models nvcr.io/nvidia/tritonserver:25.07-py3-igpu tritonserver --model-repository=/models`. The Triton Inference Server is now available on localhost and can be accessed using the Triton client libraries (example given in ./triton/tests/triton-client.py).
 
-### Running vLLM
+## Troubleshooting
 
-Tag: `vllm-raw`
+### Troubleshooting gRPC
 
-Run `podman run --rm -d --device nvidia.com/gpu=all --ipc=host -p8000:8000 -v /usr/share/huggingface/<your model>:/<your model> ${ARTIFACT_REGISTRY_HOST}/${ARTIFACT_REGISTRY_REPO}:vllm-worker python -m vllm.entrypoints.openai.api_server --model /<your model>` where `<your model>` is one of the configured huggingface repos from [vLLM build](#vllm-server-setup). The vLLM server is now available at port 8000 of localhost and can be interfaced with using the OpenAI client libraries.
+We highly recommend setting `grpcOptions["grpc.keepalive_time_ms"]` and `grpcOptions["grpc.keepalive_timeout_ms"]` in your `JUMPSTARTER_CLIENT_CONFIG` to something safe (e.g. 10000 ms) if you start experiencing gRPC timeouts during the various Jumpstarter workflows in this repository.

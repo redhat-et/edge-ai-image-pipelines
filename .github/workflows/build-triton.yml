@@ -1,24 +1,9 @@
 name: Build Triton Server
 on:
   workflow_dispatch:
-    inputs:
-      base-reference:
-        type: string
-        required: false
-        description: "Base bootc container reference (can be left blank)"
   workflow_call:
-    inputs:
-      base-reference:
-        type: string
-        required: false
 
 jobs:
-  base-reference:
-    uses: ./.github/workflows/get-base-reference.yml
-    secrets: inherit
-    with:
-      base-reference: ${{ inputs.base-reference }}
-
   build-engine:
     uses: ./.github/workflows/run-jumpstarter-workflow.yml
     secrets: inherit
@@ -33,14 +18,12 @@ jobs:
   build-triton-base:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
     secrets: inherit
-    needs: base-reference
     with:
       containerfile: tegra/Containerfile.podman
       dest-host: ${{ vars.ARTIFACT_REGISTRY_HOST }}
       dest-image: ${{ vars.ARTIFACT_REGISTRY_REPO }}
       tag-list: "triton-base"
       build-args: |
-        BASE_IMAGE=${{ needs.base-reference.outputs.base-reference }}
         APP_IMAGES=nvcr.io/nvidia/tritonserver:25.07-py3-igpu
 
   build-triton:

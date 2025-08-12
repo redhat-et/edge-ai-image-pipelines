@@ -2,35 +2,27 @@ name: "Build vLLM Server"
 on:
   workflow_dispatch:
     inputs:
-      base-reference:
+      models:
         type: string
-        required: false
-        description: "Base bootc container reference (can be left blank)"
+        required: true
+  
   workflow_call:
     inputs:
-      base-reference:
+      models:
         type: string
-        required: false
+        required: true
 
 jobs:
-  base-reference:
-    uses: ./.github/workflows/get-base-reference.yml
-    secrets: inherit
-    with:
-      base-reference: ${{ inputs.base-reference }}
-
   # vLLM with no models. Those are added in the next job
   build-vllm-base:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
     secrets: inherit
-    needs: base-reference
     with:
       containerfile: tegra/Containerfile.podman
       dest-image: ${{ vars.ARTIFACT_REGISTRY_REPO }}
       dest-host: ${{ vars.ARTIFACT_REGISTRY_HOST }}
       tag-list: "vllm-base"
       build-args: |
-        BASE_IMAGE=${{ needs.base-reference.outputs.base-reference }}
         APP_IMAGES=quay.io/redhat-user-workloads/octo-edge-tenant/jetson-wheels-vllm-app@sha256:4d1ed330d00308a3148cdea4495be09a05cee9cf7a114eed0ca83e40e6d58794
 
   build-vllm:
@@ -44,7 +36,7 @@ jobs:
       tag-list: "vllm"
       build-args: |
         BASE_IMAGE=${{ needs.build-vllm-base.outputs.dest-reference }}
-        HF_REPOS=ibm-granite/granite-vision-3.2-2b
+        HF_REPOS=${{ inputs.models }}
 
   build-vllm-raw:
     uses: ./.github/workflows/build-rhel-bootc-raw-image.yml

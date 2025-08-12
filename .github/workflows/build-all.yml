@@ -2,43 +2,21 @@ name: "Build all Jetson Servers"
 on:
   workflow_dispatch:
 jobs:
-  build-base:
-    uses: ./.github/workflows/build-rhel-bootc-image.yml
-    secrets: inherit
-    with:
-      containerfile: tegra/Containerfile.base
-      dest-image: ${{ vars.DEST_REGISTRY_REPO }}
-      dest-host: ${{ vars.DEST_REGISTRY_HOST }}
-      tag-list: "base"    
-
-  build-base-raw:
-    uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
-    secrets: inherit
-    needs: build-base
-    with:
-      config-file: ./tegra/config.toml
-      src-reference: ${{ needs.build-base.outputs.dest-reference }}
-
   build-ollama:
     uses: ./.github/workflows/build-ollama.yml
     secrets: inherit
-    needs: build-base
     with:
-      base-reference: ${{ needs.build-base.outputs.dest-reference }}
-
+      models: gemma3:4b
+  
   build-vllm:
     uses: ./.github/workflows/build-vllm.yml
     secrets: inherit
-    needs: build-base
     with:
-      base-reference: ${{ needs.build-base.outputs.dest-reference }}
+      models: ibm-granite/granite-vision-3.2-2b
 
   build-triton:
     uses: ./.github/workflows/build-triton.yml
     secrets: inherit
-    needs: build-base
-    with:
-      base-reference: ${{ needs.build-base.outputs.dest-reference }}
 
   build-triton-microshift:
     uses: ./.github/workflows/build-microshift.yml

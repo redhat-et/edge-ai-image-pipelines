@@ -9,8 +9,9 @@
 #   APP_IMAGES: Whitespace-delimited list of podman container images to add to this image
 #   DAT_IMAGES: Whitespace-delimited list of podman artifact images to add to this image
 
-ARG BASE_IMAGE=quay.io/redhat-et/rhel-bootc-tegra:base
+ARG BASE_IMAGE=quay.io/redhat-user-workloads/octo-edge-tenant/rhel-bootc-jetson-rhel94:latest
 FROM ${BASE_IMAGE}
+LABEL quay.expires-after=7d
 
 # Add scripts for embedding and copying physically bound images
 COPY --chmod=0555 ./tegra/physically-bound-images/embed_image.sh \
