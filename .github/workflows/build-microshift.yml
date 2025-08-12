@@ -4,7 +4,7 @@ on:
     inputs:
       resource-definitions:
         type: string
-        description: "See README.md"
+        description: "Resource defitions (see README.md)"
         required: false
       input-image:
         type: string
