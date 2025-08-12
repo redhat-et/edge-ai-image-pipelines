@@ -17,5 +17,10 @@ ARG PLAN_REPOSITORY
 
 # Set up and copy the model repository from the specified Podman Artifact
 # Use oras to pull the OCI artifact directly
-RUN --mount=type=secret,id=podman-auth,dst=auth.json \
-    oras pull --output /models --registry-config auth.json ${PLAN_REPOSITORY}
+RUN --mount=type=secret,id=podman-auth,dst=auth.json <<EOF
+
+oras pull --output /models --registry-config auth.json ${PLAN_REPOSITORY}
+tar xvf /models/plan-repository.tar -C /models
+rm /models/plan-repository.tar
+
+EOF
