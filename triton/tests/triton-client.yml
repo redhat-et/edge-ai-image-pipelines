@@ -5,7 +5,7 @@ metadata:
 spec:
   containers:
   - name: client
-    image: python:3.12
+    image: quay.io/vraiti/triton-client:latest
     command: ["/bin/sh", "-c", "sleep infinity"]
     volumeMounts:
     - mountPath: /share
