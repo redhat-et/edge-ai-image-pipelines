@@ -20,8 +20,11 @@ spec:
         args: ["tritonserver", "--model-repository=/models"]
         ports:
         - containerPort: 8000
+          hostPort: 8000
         - containerPort: 8001
+          hostPort: 8001
         - containerPort: 8002
+          hostPort: 8002
         volumeMounts:
         - name: model-repository
           mountPath: /models
