@@ -14,8 +14,9 @@ FROM ${BASE_IMAGE}
 LABEL quay.expires-after=7d
 
 RUN <<EOF
-dnf install pip
-pip install jetson-stats
+dnf install -y pip
+pip install uv
+uv pip install --system jetson-stats
 EOF
 
 # Add scripts for embedding and copying physically bound images
