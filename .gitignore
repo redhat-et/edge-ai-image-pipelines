@@ -4,3 +4,5 @@
 *.tar
 *.xz
 **/__pycache__
+*.jpg
+*.jpeg
