@@ -1,0 +1,24 @@
+name: "Build 9.6 base image"
+on: 
+  workflow_dispatch:
+  workflow_call:
+jobs:
+  build-base:
+    uses: ./.github/workflows/build-rhel-bootc-image.yml
+    secrets: inherit
+    with:
+      containerfile: tegra/Containerfile.base
+      dest-image: ${{ vars.DEST_REGISTRY_REPO }}
+      dest-host: ${{ vars.DEST_REGISTRY_HOST }}
+      tag-list: "base-96"
+      build-args: |
+        BASE_IMAGE=quay.io/redhat-user-workloads/octo-edge-tenant/rhel-bootc-jetson-rhel96:latest
+
+  build-base-raw:
+    uses: ./.github/workflows/build-rhel-bootc-raw-image.yml
+    secrets: inherit
+    needs: build-base
+    with:
+      config-file: ./tegra/config.toml
+      src-reference: ${{ needs.build-base.outputs.dest-reference }}
+
