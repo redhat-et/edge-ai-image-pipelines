@@ -18,7 +18,7 @@ ENV IMAGE_LIST_FILE=${IMAGE_STORAGE_DIR}/image-list.txt
 # RUN echo "exclude=kernel* kmod-kvdo" >> /etc/yum.conf
 
 # Set microshift version to install
-ARG USHIFT_VER=4.18
+ARG USHIFT_VER=4.19
 
 # Install MicroShift and its dependencies, then enable the MicroShift service
 RUN dnf config-manager \
