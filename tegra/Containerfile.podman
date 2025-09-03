@@ -11,7 +11,7 @@
 
 ARG BASE_IMAGE=quay.io/redhat-user-workloads/octo-edge-tenant/rhel-bootc-jetson-rhel94:latest
 FROM ${BASE_IMAGE}
-LABEL quay.expires-after=7d
+LABEL quay.expires-after=120d
 
 RUN <<EOF
 dnf install -y pip
