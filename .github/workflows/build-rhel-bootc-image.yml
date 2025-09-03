@@ -64,8 +64,15 @@ jobs:
           dnf config-manager --add-repo https://repo.almalinux.org/almalinux/10/BaseOS/aarch64/os/
           dnf install xfsprogs -y --nogpgcheck
           mkfs.xfs /dev/nvme0n1
-          mkdir -p              /var/lib/containers
-          mount    /dev/nvme0n1 /var/lib/containers
+          mkdir -p              /var/mnt
+          mount    /dev/nvme0n1 /var/mnt
+          mkdir -p              /var/mnt/containers
+          mkdir -p              /var/mnt/tmp
+
+          mkdir -p                          /var/lib/containers
+          mkdir -p                          /var/tmp
+          mount --bind  /var/mnt/containers /var/lib/containers
+          mount --bind  /var/mnt/tmp        /var/tmp
 
       - name: Access a subscription via activation key
         run: subscription-manager register --org=${{ secrets.RHT_ORGID }} --activationkey=${{ secrets.RHT_ACT_KEY }}
