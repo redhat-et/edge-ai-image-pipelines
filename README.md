@@ -143,7 +143,7 @@ Run `podman run --device nvidia.com/gpu=all --ipc=host ${ARTIFACT_REGISTRY_HOST}
 
 Tag: `vllm-raw`
 
-Run `podman run --name server --network vllm -d --device nvidia.com/gpu=all --ipc=host -p8000:8000 -v .:/share -v /usr/share/huggingface:/huggingface quay.io/redhat-user-workloads/octo-edge-tenant/jetson-wheels-vllm-app@sha256:4d1ed330d00308a3148cdea4495be09a05cee9cf7a114eed0ca83e40e6d58794 /bin/bash -c \"/app/bin/python -m vllm.entrypoints.openai.api_server --model /huggingface/<your model> --gpu_memory_utilization=0.8 --max_model_len=8200 > /share/vllm.log\"` where `<your model>` is one of the configured huggingface repos from [vLLM build](#vllm-server-setup). If using the prebuilt image from quay.io/redhat-et, the only model available will be ibm-granite/granite-vision-3.2-2b
+Run `podman run --name server --network vllm -d --device nvidia.com/gpu=all --ipc=host -p8000:8000 -v .:/share -v /usr/share/huggingface:/huggingface quay.io/redhat-user-workloads/octo-edge-tenant/jetson-wheels-vllm-app:latest /bin/bash -c \"/app/bin/python -m vllm.entrypoints.openai.api_server --model /huggingface/<your model> --gpu_memory_utilization=0.8 --max_model_len=8200 > /share/vllm.log\"` where `<your model>` is one of the configured huggingface repos from [vLLM build](#vllm-server-setup). If using the prebuilt image from quay.io/redhat-et, the only model available will be ibm-granite/granite-vision-3.2-2b
 
 ### Running Triton
 

@@ -23,7 +23,7 @@ jobs:
       dest-host: ${{ vars.ARTIFACT_REGISTRY_HOST }}
       tag-list: "vllm-base"
       build-args: |
-        APP_IMAGES=quay.io/redhat-user-workloads/octo-edge-tenant/jetson-wheels-vllm-app@sha256:4d1ed330d00308a3148cdea4495be09a05cee9cf7a114eed0ca83e40e6d58794
+        APP_IMAGES=quay.io/redhat-user-workloads/octo-edge-tenant/jetson-wheels-vllm-app:latest
 
   build-vllm:
     uses: ./.github/workflows/build-rhel-bootc-image.yml
