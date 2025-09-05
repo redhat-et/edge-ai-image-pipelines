@@ -143,7 +143,15 @@ Run `podman run --device nvidia.com/gpu=all --ipc=host ${ARTIFACT_REGISTRY_HOST}
 
 Tag: `vllm-raw`
 
-Run `podman run --name server --network vllm -d --device nvidia.com/gpu=all --ipc=host -p8000:8000 -v .:/share -v /usr/share/huggingface:/huggingface quay.io/redhat-user-workloads/octo-edge-tenant/jetson-wheels-vllm-app:latest /bin/bash -c \"/app/bin/python -m vllm.entrypoints.openai.api_server --model /huggingface/<your model> --gpu_memory_utilization=0.8 --max_model_len=8200 > /share/vllm.log\"` where `<your model>` is one of the configured huggingface repos from [vLLM build](#vllm-server-setup). If using the prebuilt image from quay.io/redhat-et, the only model available will be ibm-granite/granite-vision-3.2-2b
+Run `podman run --name server --network vllm -d --device nvidia.com/gpu=all --ipc=host -p8000:8000 -v .:/share -v /usr/share/huggingface:/huggingface quay.io/redhat-user-workloads/octo-edge-tenant/jetson-wheels-vllm-app:latest /bin/bash -c \"/app/bin/python -m vllm.entrypoints.openai.api_server --model /huggingface/<your model> --gpu_memory_utilization=0.8 --max_model_len=6000 > /share/vllm.log\"` where `<your model>` is one of the configured huggingface repos from [vLLM build](#vllm-server-setup). If using the prebuilt image from quay.io/redhat-et, the only model available will be ibm-granite/granite-vision-3.2-2b
+
+If you're curious, here's a breakdown of the command-line options used in this one-liner:
+* `-p8000:8000`: Exposes the vLLM OpenAI API server to the host
+* `-v .:/share`: Mounts the CWD as a volume for vLLM so we can collect logs
+* `-v /usr/share/huggingface:/huggingface`: Mounts the hugginface diretory as a volume for vLLM
+* `--device nvidia.com/gpu=all`: Makes CUDA system and other gpu-related resources available to vLLM using NVIDIA CDI
+* `--gpu_memory_utilization=0.8`: Since this is a Jetson, the GPU is an iGPU and memory is shared with the CPU, so 100% of the memory will never be available for vLLM, and vLLM will fail if it cannot achieve the configured memory utilization. This defaults to 1.0, so we must set it lower
+* `--max_model_len=6000`: Since we are likely resource-constrained, set maximum context length to something (relatively) small to prevent us from going OOM
 
 ### Running Triton
 

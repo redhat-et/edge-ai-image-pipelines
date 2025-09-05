@@ -23,7 +23,7 @@ if st.button("Generate Response"):
        
         with st.spinner("Generating..."):
             response = client.chat.completions.create(
-              model="/huggingface/ibm-granite/granite-vision-3.2-2b",
+              model="/huggingface/ibm-granite/granite-vision-3.3-2b", 
               messages=[
                 {
                     "role": "system", 
