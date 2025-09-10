@@ -1,6 +1,6 @@
-# Edge Pipelines for Model Validation
+# Edge AI Image Pipelines
 
-This repository contains several workflows to automate the building, testing, and releasing of inference stacks on the edge.
+This repository contains several workflows to automate the building and testing of inference stacks on the edge.
 
 These pipelines are triggered with a simple `workflow_dispatch` event, but must be configured for your usecase first.
 
@@ -33,6 +33,9 @@ Running images:
 * [Triton](#running-triton)
 * [Triton Microshift](#running-triton-microshift)
 
+Building Custom Images:
+* [How To](#building-custom-images)
+
 Troubleshooting:
 * [Jumpstarter gRPC Timeouts](#grpc-troubleshooting)
 
@@ -44,8 +47,8 @@ A number of pre-built RHEL Bootc Jetson images are available on [Quay](https://q
 
 If you'd like to build your own Bootc Images (e.g. with different models or extra services):
 * Configure repository variables and secrets according to [Section: Variables](#variables-required). Note that if you aren't building Triton or Microshift, there are certain variables you do not have to configure.
-* Consult the corresponding section under "Configuring image build". This will tell you how to add your desired models to the image
-* Run the corresponding workflow titled "Build $APP". This will take a while
+* Consult the corresponding section under "Configuring image build" OR if you need more advanced configuration consult [Building Custom Images](#building-custom-image)
+* Run the corresponding workflow. This will take a while
 
 ### Variables (Required)
 
@@ -70,7 +73,7 @@ Required Repository Variables:
 * `ARTIFACT_REGISTRY_REPO`
 * `DEST_REGISTRY_HOST`
 * `DEST_REGISTRY_REPO`
-* `JUMPSTARTER_SELECTOR`: Jumpstarter selector used to acquire Jumpstarter-controlled device for these workflows (passed as jmp create lease --selector $JUMPSTARTER_SELECTOR)
+* `JUMPSTARTER_SELECTOR`: Jumpstarter selector used to acquire Jumpstarter-controlled device for these workflows (passed as `jmp create lease --selector $JUMPSTARTER_SELECTOR`)
 
 ### Ollama Build Config
 
@@ -158,6 +161,16 @@ If you're curious, here's a breakdown of the command-line options used in this o
 Tag: `triton-raw`
 
 Run `podman run --rm -d --device nvidia.com/gpu=all --ipc=host -p8000:8000 -p8001:8001 -p8002:8002 -v /models:/models nvcr.io/nvidia/tritonserver:25.07-py3-igpu tritonserver --model-repository=/models`. The Triton Inference Server is now available on localhost and can be accessed using the Triton client libraries (example given in ./triton/tests/triton-client.py).
+
+## Building Custom Images
+
+The CI for each image can be customized easily to with additional application containers or models. To do this, see the corresponding section in [configuration](#configuration). If you would like to do something more sophisticated (e.g. installing systemd units), then you will most likely need to create a new GitHub Actions job that adds these features before its compiled to a disk image. To do so:
+* Create a Containerfile `$CONTAINERFILE` somewhere in this GitHub containing the modification to one of the already existing Bootc images
+* Create a workflow in `.github/workflows/` that uses [build-rhel-bootc-image.yml](.github/workflows/build-rhel-bootc-image.yml) with $CONTAINERFILE as the configured containerfile
+* Add a call to [build-rhel-bootc-raw-image.yml](.github/workflows/build-rhel-bootc-raw-image.yml) to create the disk image
+* Invoke the workflow with a `workflow_dispatch` event. This will probably take a while.
+
+For an example of how to do this, see `.github/workflows/build-ollama.yml`
 
 ## Troubleshooting
 
