@@ -20,6 +20,13 @@ ENV IMAGE_LIST_FILE=${IMAGE_STORAGE_DIR}/image-list.txt
 # Set microshift version to install
 ARG USHIFT_VER=4.19
 
+# Install git and helm for package management
+RUN dnf install -y git
+RUN <<EOF
+curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | sh
+cp /usr/local/bin/helm /usr/bin/helm
+EOF
+
 # Install MicroShift and its dependencies, then enable the MicroShift service
 RUN dnf config-manager \
         --set-enabled rhocp-${USHIFT_VER}-for-rhel-9-$(uname -m)-rpms \
