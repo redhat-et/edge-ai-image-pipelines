@@ -1,0 +1,21 @@
+name: "Build Empty Microshift Server"
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  build-empty:
+    uses: ./.github/workflows/build-rhel-bootc-image.yml
+    secrets: inherit
+    with:
+      containerfile: tegra/Containerfile.podman
+      dest-image: "redhat-et/rhel-bootc-tegra"
+      tag-list: "empty"
+
+  build-microshift:
+    uses: ./.github/workflows/build-microshift.yml
+    secrets: inherit
+    needs: build-empty
+    with:
+      input-image: ${{ needs.build-empty.outputs.dest-reference }}
+      tag-list: "microshift"
