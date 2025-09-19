@@ -1,4 +1,5 @@
 import sys
+import pytest
 
 from jumpstarter_testing.pytest import JumpstarterTest
 from jumpstarter_driver_network.adapters import FabricAdapter
@@ -7,15 +8,19 @@ USERNAME = "admin"
 PASSWORD = "passwd"
 
 
-class TestQemu(JumpstarterTest):
-    def test_driver_qemu(tmp_path, client):
+class TestJetson(JumpstarterTest):
+    @pytest.fixture(scope="class")
+    def ssh(self, client):
         with client.log_stream():
             client.storage.flash("./image.raw")
-
             client.power.cycle()
 
             with client.serial.pexpect() as p:
                 p.logfile = sys.stdout.buffer
+
+                p.expect_exact("Enter to continue boot.", timeout=600)
+                p.sendline("")
+
                 p.expect_exact("login:", timeout=600)
                 p.sendline(USERNAME)
                 p.expect_exact("Password:")
@@ -29,14 +34,25 @@ class TestQemu(JumpstarterTest):
                 user=USERNAME,
                 connect_kwargs={"password": PASSWORD},
             ) as ssh:
-                ssh.sudo(
-                    "podman run --name ollama -d -i --rm --device nvidia.com/gpu=all "
-                    "docker.io/dustynv/ollama:0.6.8-r36.4-cu126-22.04"
-                )
-                assert (
-                    "library=cuda variant=jetpack6 compute=8.7 driver=12.6 name=Orin"
-                    in ssh.sudo("podman exec ollama cat /data/logs/ollama.log").stdout
-                )
-                ssh.sudo("podman stop ollama")
+                yield ssh
 
-            client.power.off()
+    @pytest.mark.xfail  # not available on Jetson Thor and Jetson Orin Nano Super Developer Kit
+    def test_can(self, ssh):
+        assert len(ssh.sudo("ip -o link show type can").stdout.splitlines()) > 0
+
+    def test_usb(self, ssh):
+        assert len(ssh.sudo("ls -1 /sys/bus/usb/devices/").stdout.splitlines()) > 0
+
+    def test_pcie(self, ssh):
+        assert len(ssh.sudo("ls -1 /sys/bus/pci/devices/").stdout.splitlines()) > 0
+
+    def test_hardware_video_acceleration(self, ssh):
+        ssh.sudo(
+            "gst-launch-1.0 videotestsrc num-buffers=300 ! nvvidconv ! nvv4l2h264enc ! nvv4l2decoder ! fakesink"
+        )
+
+    def test_cuda(self, ssh):
+        ssh.sudo(
+            "podman run --rm --device nvidia.com/gpu=all nvcr.io/nvidia/pytorch:25.08-py3-igpu "
+            "python3 -c 'import torch; print(torch.rand(10).cuda() * torch.rand(10).cuda())'"
+        )
