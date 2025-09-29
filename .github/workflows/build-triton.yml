@@ -1,8 +1,15 @@
 name: Build Triton Server
 on:
   workflow_dispatch:
+    inputs:
+      plan-repository:
+        type: string
+        required: false
+        description: "URL of plan repository (see README.md)"
   workflow_call:
-
+    inputs:
+      plan-repository:
+        type: string
 jobs:
   build-engine:
     uses: ./.github/workflows/run-jumpstarter-workflow.yml
@@ -11,9 +18,20 @@ jobs:
       jumpstarter-selector: ${{ vars.JUMPSTARTER_SELECTOR }}
       image-url: ${{ vars.DEST_REGISTRY_HOST }}/${{ vars.DEST_REGISTRY_REPO }}:base-raw
       workflow-cmd: |
-        bash triton/build/jmp-build-engine.sh \
-          ${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:onnx-repository \
-          ${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:plan-repository
+        SRC="${{ inputs.plan-repository }}"
+        DST="${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:plan-repository"
+
+        if [ -n "${{ inputs.plan-repository }}" ];
+          # this could probably be done more elegantly with ORAS
+          podman artifact pull $SRC
+          podman artifact extract $SRC plan-repository.tar
+          podman artifact add $DST plan-repository.tar
+          podman artifact push $DST  
+        else 
+          bash triton/build/jmp-build-engine.sh \
+            "${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:onnx-repository" \
+            "${{ vars.ARTIFACT_REGISTRY_HOST }}/${{ vars.ARTIFACT_REGISTRY_REPO }}:plan-repository"
+        fi
 
   build-triton-base:
     uses: ./.github/workflows/build-rhel-bootc-image.yml

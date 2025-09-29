@@ -17,6 +17,8 @@ jobs:
   build-triton:
     uses: ./.github/workflows/build-triton.yml
     secrets: inherit
+    with:
+      plan-repository: ""
 
   build-triton-microshift:
     uses: ./.github/workflows/build-microshift.yml

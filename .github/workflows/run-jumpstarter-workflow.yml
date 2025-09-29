@@ -96,7 +96,14 @@ jobs:
         run: |
           source jumpstarter/.venv/bin/activate
 
-          jmp shell --lease $LEASE -- ${{ inputs.workflow-cmd }}
+          FILE=$(mktmp)
+          cat <<EOF > $FILE
+          ${{ inputs.workflow-cmd }}
+          EOF
+
+          cat $FILE | jmp shell --lease $LEASE
+          rm $FILE
+
       - name: Release lease
         if: always()
         run: |
