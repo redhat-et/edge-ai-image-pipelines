@@ -1,6 +1,16 @@
 name: "Build Empty Microshift Server"
 on:
   workflow_dispatch:
+    inputs:
+      base-image:
+        type: string
+        required: true
+        default: quay.io/redhat-user-workloads/octo-edge-tenant/rhel-bootc-jetson-rhel94:latest
+        description: Base Image
+      tag-list:
+        type: string
+        required: true
+        description: Tag List
   workflow_call:
 
 jobs:
@@ -11,6 +21,8 @@ jobs:
       containerfile: tegra/Containerfile.podman
       dest-image: "redhat-et/rhel-bootc-tegra"
       tag-list: "empty"
+      build-args: |
+        BASE_IMAGE=${{ inputs.base-image }}
 
   build-microshift:
     uses: ./.github/workflows/build-microshift.yml
@@ -18,4 +30,4 @@ jobs:
     needs: build-empty
     with:
       input-image: ${{ needs.build-empty.outputs.dest-reference }}
-      tag-list: "microshift"
+      tag-list: ${{ inputs.tag-list }}
