@@ -1,8 +1,12 @@
 import sys
+import os
 import pytest
 
+from pathlib import Path
 from jumpstarter_testing.pytest import JumpstarterTest
 from jumpstarter_driver_network.adapters import FabricAdapter
+
+FILE = Path(os.path.realpath(__file__)).parent
 
 USERNAME = "admin"
 PASSWORD = "passwd"
@@ -52,7 +56,19 @@ class TestJetson(JumpstarterTest):
         )
 
     def test_cuda(self, ssh):
-        ssh.sudo(
-            "podman run --rm --device nvidia.com/gpu=all nvcr.io/nvidia/pytorch:25.08-py3-igpu "
-            "python3 -c 'import torch; print(torch.rand(10).cuda() * torch.rand(10).cuda())'"
-        )
+        tmp = ssh.run("mktemp -d").stdout.strip()
+        ssh.put(FILE / "cuda" / "Dockerfile", tmp)
+        ssh.sudo("podman build --no-cache --device nvidia.com/gpu=all {}".format(tmp))
+
+    def test_dla(self, ssh):
+        tmp = ssh.run("mktemp -d").stdout.strip()
+        ssh.put(FILE / "dla" / "Dockerfile", tmp)
+        assert "[V] [TRT] [DlaLayer]" in ssh.sudo(
+            "podman build --no-cache --device nvidia.com/gpu=all {}".format(tmp)
+        ).stdout
+
+    def test_pva(self, ssh):
+        tmp = ssh.run("mktemp -d").stdout.strip()
+        ssh.put(FILE / "pva" / "Dockerfile", tmp)
+        ssh.sudo("bash -c 'echo 0 > /sys/kernel/debug/pva0/vpu_app_authentication'")
+        ssh.sudo("podman build --no-cache --device nvidia.com/gpu=all {}".format(tmp))
