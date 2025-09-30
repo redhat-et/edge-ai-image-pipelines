@@ -55,11 +55,13 @@ class TestJetson(JumpstarterTest):
             "gst-launch-1.0 videotestsrc num-buffers=300 ! nvvidconv ! nvv4l2h264enc ! nvv4l2decoder ! fakesink"
         )
 
+    @pytest.mark.critical
     def test_cuda(self, ssh):
         tmp = ssh.run("mktemp -d").stdout.strip()
         ssh.put(FILE / "cuda" / "Dockerfile", tmp)
         ssh.sudo("podman build --no-cache --device nvidia.com/gpu=all {}".format(tmp))
 
+    @pytest.mark.critical
     def test_dla(self, ssh):
         tmp = ssh.run("mktemp -d").stdout.strip()
         ssh.put(FILE / "dla" / "Dockerfile", tmp)
@@ -67,6 +69,7 @@ class TestJetson(JumpstarterTest):
             "podman build --no-cache --device nvidia.com/gpu=all {}".format(tmp)
         ).stdout
 
+    @pytest.mark.critical
     def test_pva(self, ssh):
         tmp = ssh.run("mktemp -d").stdout.strip()
         ssh.put(FILE / "pva" / "Dockerfile", tmp)
