@@ -24,4 +24,5 @@ RUN patch -d /workspace/tensorrt/samples -p 1 <<EOF
 EOF
 RUN make -C /workspace/tensorrt/samples -j 4
 WORKDIR /workspace/tensorrt
+ARG CACHEBUST=0
 RUN /workspace/tensorrt/bin/sample_onnx_mnist --useDLACore=0

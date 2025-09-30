@@ -14,6 +14,7 @@ RUN apt-get install -y libnvvpi3 vpi3-dev vpi3-samples
 RUN vpi3_install_samples.sh /samples
 RUN cmake -S /samples/NVIDIA_VPI-3.2-samples/05-benchmark/ -B /build
 RUN cmake --build /build/
+ARG CACHEBUST=0
 RUN /build/vpi_sample_05_benchmark cuda
 RUN /build/vpi_sample_05_benchmark pva
 RUN /build/vpi_sample_05_benchmark cpu

@@ -2,6 +2,7 @@ import sys
 import os
 import pytest
 
+from datetime import datetime
 from pathlib import Path
 from jumpstarter_testing.pytest import JumpstarterTest
 from jumpstarter_driver_network.adapters import FabricAdapter
@@ -59,19 +60,32 @@ class TestJetson(JumpstarterTest):
     def test_cuda(self, ssh):
         tmp = ssh.run("mktemp -d").stdout.strip()
         ssh.put(FILE / "cuda" / "Dockerfile", tmp)
-        ssh.sudo("podman build --no-cache --device nvidia.com/gpu=all {}".format(tmp))
+        ssh.sudo(
+            "podman build --build-arg CACHEBUST={} --device nvidia.com/gpu=all {}".format(
+                datetime.now().timestamp(), tmp
+            )
+        )
 
     @pytest.mark.critical
     def test_dla(self, ssh):
         tmp = ssh.run("mktemp -d").stdout.strip()
         ssh.put(FILE / "dla" / "Dockerfile", tmp)
-        assert "[V] [TRT] [DlaLayer]" in ssh.sudo(
-            "podman build --no-cache --device nvidia.com/gpu=all {}".format(tmp)
-        ).stdout
+        assert (
+            "[V] [TRT] [DlaLayer]"
+            in ssh.sudo(
+                "podman build --build-arg CACHEBUST={} --device nvidia.com/gpu=all {}".format(
+                    datetime.now().timestamp(), tmp
+                )
+            ).stdout
+        )
 
     @pytest.mark.critical
     def test_pva(self, ssh):
         tmp = ssh.run("mktemp -d").stdout.strip()
         ssh.put(FILE / "pva" / "Dockerfile", tmp)
         ssh.sudo("bash -c 'echo 0 > /sys/kernel/debug/pva0/vpu_app_authentication'")
-        ssh.sudo("podman build --no-cache --device nvidia.com/gpu=all {}".format(tmp))
+        ssh.sudo(
+            "podman build --build-arg CACHEBUST={} --device nvidia.com/gpu=all {}".format(
+                datetime.now().timestamp(), tmp
+            )
+        )
