@@ -68,6 +68,9 @@ jobs:
           source jumpstarter/.venv/bin/activate
 
           LEASE=$(jmp create lease --selector ${{ inputs.jumpstarter-selector }} --duration 01:00:00 --output name)
+          
+          echo "LEASE=$LEASE" >> "$GITHUB_ENV"
+          
           while true; do
             EXPORTER=$(jmp get leases -o json | jq ".leases[] | select(.name==\"$LEASE\") | .exporter")
             if [[ -n "$EXPORTER" ]]; then
@@ -78,8 +81,6 @@ jobs:
           
           echo Acquired lease for exporter $EXPORTER
           
-          echo "LEASE=$LEASE" >> "$GITHUB_ENV"
-
       - name: Flash bootc image
         # users have the option to not provide an image, in which case we just run the workflow-cmd
         # I can imagine this may lead to a confusing UX
@@ -96,7 +97,7 @@ jobs:
         run: |
           source jumpstarter/.venv/bin/activate
 
-          FILE=$(mktmp)
+          FILE=$(mktemp)
           cat <<EOF > $FILE
           ${{ inputs.workflow-cmd }}
           EOF
