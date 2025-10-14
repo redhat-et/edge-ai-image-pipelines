@@ -69,7 +69,7 @@ jobs:
 
           LEASE=$(jmp create lease --selector ${{ inputs.jumpstarter-selector }} --duration 01:00:00 --output name)
           while true; do
-            EXPORTER=$(jmp get leases -o json | jq "fromjson | .leases[] | select(.name==\"$LEASE\") | .exporter")
+            EXPORTER=$(jmp get leases -o json | jq ".leases[] | select(.name==\"$LEASE\") | .exporter")
             if [[ -n "$EXPORTER" ]]; then
               break
             fi
