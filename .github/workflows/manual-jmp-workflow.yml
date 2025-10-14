@@ -20,6 +20,6 @@ jobs:
     uses: ./.github/workflows/run-jumpstarter-workflow.yml
     with:
       image-url: ${{ inputs.image-url }}
-      jumpstarter-selector: ${{ inputs.jumpstarter-selector }}
+      jumpstarter-selector: name=${{ inputs.jumpstarter-selector }}
       workflow-cmd: ${{ inputs.workflow-cmd }}
     secrets: inherit 
