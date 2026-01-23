@@ -80,9 +80,9 @@ class TestJetson(JumpstarterTest):
         )
 
     @pytest.mark.critical
-    def test_pva(self, ssh):
+    def test_vpi(self, ssh):
         tmp = ssh.run("mktemp -d").stdout.strip()
-        ssh.put(FILE / "pva" / "Dockerfile", tmp)
+        ssh.put(FILE / "vpi" / "Dockerfile", tmp)
         ssh.sudo("bash -c 'echo 0 > /sys/kernel/debug/pva0/vpu_app_authentication'")
         ssh.sudo(
             "podman build --build-arg CACHEBUST={} --device nvidia.com/gpu=all {}".format(
